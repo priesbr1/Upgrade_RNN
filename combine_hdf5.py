@@ -93,11 +93,10 @@ for filename in filenames:
         continue
 
     # generate random numbers for checking
-    save_length = numpy.random.randint(50,200)
+    save_length = numpy.random.randint(5,20)
     save_index = numpy.random.randint(0,min_entries-(save_length+1))
 
     print("reading input file {} with {} entries".format(filename, entries))
-    print("checking with %i entries beginning at index %i"%(save_length, save_index))
 
     out_weights = numpy.concatenate((out_weights, f_input['weights'][:]))
     for k in label_keys:
@@ -144,10 +143,6 @@ def isSubArray(long_array, short_array):
     j = 0
     m = len(long_array)
     n = len(short_array)
-
-    print(long_array[save_index])
-    print(short_array)
-    print(" ")
 
     max_match = 0
     match = 0
