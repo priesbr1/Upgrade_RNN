@@ -19,9 +19,12 @@ from I3Tray import I3Units
 parser = argparse.ArgumentParser()
 parser.add_argument("-f", "--file", type=str, default=None,
                     dest="input_files", help="name for input file")
+parser.add_argument("-o", "--overwrite", type=bool, default=False,
+                    dest="overwrite", help="whether or not ot overwrite previous file")
 args = parser.parse_args()
 
 input_files = args.input_files
+overwrite = args.overwrite
 
 def load_geometry(geometry_filename): # Gets geometry from specific geometry file
     
@@ -255,7 +258,7 @@ if isinstance(input_files, list):
     for input_file in input_files:
         output_file = "/mnt/scratch/priesbr1/Processed_Files/" + strip_i3_ext(input_file, keep_path=False) + ".hdf5"
 
-        if os.path.isfile(output_file) == True:
+        if os.path.isfile(output_file) == True and overwrite == False:
             print("Skipping file -- %s already exists"%output_file)
 
         else:
@@ -265,8 +268,11 @@ if isinstance(input_files, list):
             if sum(reco['energy']) == 0:
                 reco = None
 
-            if len(weights) > 0:
+            if len(weights) > 0 and os.path.isfile(output_file) == False:
                 print("Writing {}...".format(output_file))
+                write_hdf5_file(output_file, features, labels, reco, weights)
+            elif len(weights) > 0 and os.path.isfile(output_file) == True and overwrite == True:
+                print("Overwriting {}...".format(output_file))
                 write_hdf5_file(output_file, features, labels, reco, weights)
             else:
                 print("No output to write, file {} is empty".format(input_file))
@@ -275,7 +281,7 @@ elif isinstance(input_files, str):
     input_file = input_files
     output_file = "/mnt/scratch/priesbr1/Processed_Files/" + strip_i3_ext(input_file, keep_path=False) + ".hdf5"
 
-    if os.path.isfile(output_file) == True:
+    if os.path.isfile(output_file) == True and overwrite == False:
         print("Skipping file -- %s already exists"%output_file)
 
     else:
@@ -285,8 +291,11 @@ elif isinstance(input_files, str):
         if sum(reco['energy']) == 0:
             reco = None
 
-        if len(weights) > 0:
+        if len(weights) > 0 and os.path.isfile(output_file) == False:
             print("Writing {}...".format(output_file))
+            write_hdf5_file(output_file, features, labels, reco, weights)
+        elif len(weights) > 0 and os.path.isfile(output_file) == True and overwrite == True:
+            print("Overwriting {}...".format(output_file))
             write_hdf5_file(output_file, features, labels, reco, weights)
         else:
             print("No output to write, file {} is empty".format(input_file))
