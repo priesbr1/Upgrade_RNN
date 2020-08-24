@@ -21,10 +21,13 @@ parser.add_argument("-f", "--file", type=str, default=None,
                     dest="input_files", help="name for input file")
 parser.add_argument("-o", "--overwrite", type=bool, default=False,
                     dest="overwrite", help="whether or not to overwrite previous files")
+parser.add_argument("-p", "--pulse_type", type=str, default='uncleaned',
+                    dest="pulse_type", help="type of pulseseries to use")
 args = parser.parse_args()
 
 input_files = args.input_files
 overwrite = args.overwrite
+pulse_type = str.lower(args.pulse_type)
 
 def load_geometry(filename): # Gets geometry from specific geometry file
     
@@ -95,7 +98,12 @@ def read_files(filename_list):
                 # get all pulses
                 pulseseriesmap = None
                 try:
-                    pulseseriesmap = dataclasses.I3RecoPulseSeriesMap.from_frame(frame, 'SplitInIcePulses') # Uncleaned ('SplitInIcePulses') or cleaned ('SplitInIcePulsesSRT')
+                    if pulse_type == 'uncleaned':
+                        pulseseriesmap = dataclasses.I3RecoPulseSeriesMap.from_frame(frame, 'SplitInIcePulses')
+                    elif pulse_type == 'cleaned':
+                        pulseseriesmap = dataclasses.I3RecoPulseSeriesMap.from_frame(frame, 'SplitInIcePulsesSRT')
+                    else:
+                        raise RuntimeError("Unknown pulseseries type specified: %s"%pulse_type)
                 except:
                     pulseseriesmap = None
                 if pulseseriesmap is None:
