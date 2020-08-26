@@ -97,16 +97,20 @@ def get_event_info(filename_list, pulse_type, num_use):
 
     # Cut to maximum number of events, if applicable
     if num_use and len(all_pulse_times) > num_use:
+        global cut
+        cut = True
         cut_pulses = all_pulse_times[:num_use]
         removed_events = len(all_pulse_times) - len(cut_pulses)
         print("Removed %i events -- using remaining %i events"%(removed_events, len(cut_pulses)))
     else:
+        global cut
+        cut = False
         cut_pulses = all_pulse_times
         print("Keeping all %i events"%len(cut_pulses))
 
     return cut_pulses
 
-def plot_trig_resolution(shifted_pulses, output_folder):
+def plot_trig_resolution(shifted_pulses, output_folder, num_use):
 
     # Flatten pulse array for plotting
     flattened_pulses = [pulse for pulse_list in shifted_pulses for pulse in pulse_list]
@@ -120,7 +124,10 @@ def plot_trig_resolution(shifted_pulses, output_folder):
     plt.yscale('log')
     plt.hist(flattened_pulses, range=(min(flattened_pulses), max(flattened_pulses)), bins=100, histtype='stepfilled', alpha=0.5)
     plt.axvline(x=0, color='green')
-    imgname = output_folder+'trigger_resolution.png'
+    if cut == False:
+        imgname = output_folder+'trigger_resolution_all.png'
+    else:
+        imgname = output_folder+'trigger_resolution_'+str(num_use)+'.png'
     plt.savefig(imgname)
     print("Plot saved as %s"%imgname)
 
@@ -128,4 +135,4 @@ if '*' in input_files or '?' in input_files:
     input_files = sorted(glob.glob(input_files))
 
 shifted_pulses = get_event_info(input_files, pulse_type, num_use)
-plot_trig_resolution(shifted_pulses, output_folder)
+plot_trig_resolution(shifted_pulses, output_folder, num_use)
