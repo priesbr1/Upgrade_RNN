@@ -248,9 +248,15 @@ def strip_i3_ext(filename, keep_path=True):
         basename, ext = os.path.splitext(os.path.basename(name))
         if (ext == "") or (ext == '.i3'):
             if keep_path:
-                return os.path.join(path, basename[:18]+"_cleaned"+basename[18:])
+                if pulse_type == 'cleaned':
+                    return os.path.join(path, basename[:18]+"_cleaned"+basename[18:])
+                else:
+                    return os.path.join(path, basename)
             else:
-                return basename[:18]+"_cleaned"+basename[18:]
+                if pulse_type == 'cleaned':
+                    return basename[:18]+"_cleaned"+basename[18:]
+                else:
+                    return basename
         name = basename
 
 load_geometry("/mnt/scratch/priesbr1/Simulation_Files/GeoCalibDetectorStatus_ICUpgrade.v55.mixed.V5.i3.bz2")

@@ -97,14 +97,10 @@ def get_event_info(filename_list, pulse_type, num_use):
 
     # Cut to maximum number of events, if applicable
     if num_use and len(all_pulse_times) > num_use:
-        global cut
-        cut = True
         cut_pulses = all_pulse_times[:num_use]
         removed_events = len(all_pulse_times) - len(cut_pulses)
         print("Removed %i events -- using remaining %i events"%(removed_events, len(cut_pulses)))
     else:
-        global cut
-        cut = False
         cut_pulses = all_pulse_times
         print("Keeping all %i events"%len(cut_pulses))
 
@@ -124,7 +120,7 @@ def plot_trig_resolution(shifted_pulses, output_folder, num_use):
     plt.yscale('log')
     plt.hist(flattened_pulses, range=(min(flattened_pulses), max(flattened_pulses)), bins=100, histtype='stepfilled', alpha=0.5)
     plt.axvline(x=0, color='green')
-    if cut == False:
+    if len(shifted_pulses) != num_use:
         imgname = output_folder+'trigger_resolution_all.png'
     else:
         imgname = output_folder+'trigger_resolution_'+str(num_use)+'.png'
