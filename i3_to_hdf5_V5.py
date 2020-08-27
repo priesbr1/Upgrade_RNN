@@ -21,7 +21,7 @@ parser.add_argument("-f", "--file", type=str, default=None,
                     dest="input_files", help="name for input file")
 parser.add_argument("-o", "--overwrite", type=bool, default=False,
                     dest="overwrite", help="whether or not ot overwrite previous file")
-parser.add_argument("-p", "--oulse_type", type=str, default='uncleaned',
+parser.add_argument("-p", "--pulse_type", type=str, default='uncleaned',
                     dest="pulse_type", help="type of pulseseries to use")
 args = parser.parse_args()
 
