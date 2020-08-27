@@ -124,15 +124,19 @@ if current_entry != len(out_weights):
 
 for k in label_keys:
     grp_labels.create_dataset(k, data=out_labels[k])
+print("Finished creating labels")
 for k in feature_keys:
     dt = h5py.special_dtype(vlen=out_features[k][0].dtype)
     dset = grp_features.create_dataset(k, (len(out_features[k]), ), dtype=dt)
     for i in range(len(out_features[k])):
         dset[i] = out_features[k][i]
+print("Finished creating features")
 if reco:
     for k in reco_keys:
         grp_reco.create_dataset(k, data=out_reco[k])
+print("Finished creating reco")
 grp_weights = f.create_dataset("weights", data=out_weights)
+print("Finished creating weights")
 
 f.close()
 print(" ")
