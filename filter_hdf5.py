@@ -361,7 +361,12 @@ if flatten_energy == True:
     for i in range(no_bins):
         boolarray = numpy.logical_and(numpy.array(labels['energy']) >= ranges[i], numpy.array(labels['energy']) < ranges[i+1])
         energy_bin_length.append(len(labels['energy'][boolarray]))
-    min_entries = min(energy_bin_length)
+    print("Energy bin counts:", energy_bin_length)
+    non_zero = [(element>0) for element in energy_bin_length]
+    energy_bin_length = numpy.array(energy_bin_length)
+    nonzero_energy_lengths = energy_bin_length[non_zero].tolist()
+    min_entries = min(nonzero_energy_lengths)
+    print("Minimum non-zero counts in a bin:", min_entries)
 
     #cut out extra entries in energy bins
     for i in range(no_bins):
