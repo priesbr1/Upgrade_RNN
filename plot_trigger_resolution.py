@@ -15,6 +15,8 @@ parser.add_argument("-o", "--output_folder", type=str, default=None,
                     dest="output_folder", help="name for output folder")
 parser.add_argument("-p", "--pulse_type", type=str, default=None,
                     dest="pulse_type", help="type of pulseseries to use")
+parser.add_argument("-l", "--logscale", type=bool, default=False,
+                    dest="logscale", help="whether or not to use y logscale for plotting")
 parser.add_argument("-n", "--num_use", type=int, default=None,
                     dest="num_use", help="maximum number of events to use")
 args = parser.parse_args()
@@ -22,6 +24,7 @@ args = parser.parse_args()
 input_files = args.input_files
 output_folder = args.output_folder
 pulse_type = str.lower(args.pulse_type)
+logscale = args.logscale
 num_use = args.num_use
 
 if output_folder[-1] != '/':
@@ -106,7 +109,7 @@ def get_event_info(filename_list, pulse_type, num_use):
 
     return cut_pulses
 
-def plot_trig_resolution(shifted_pulses, output_folder, num_use):
+def plot_trig_resolution(shifted_pulses, output_folder, logscale=False, num_use):
 
     # Flatten pulse array for plotting
     flattened_pulses = [pulse for pulse_list in shifted_pulses for pulse in pulse_list]
@@ -117,11 +120,16 @@ def plot_trig_resolution(shifted_pulses, output_folder, num_use):
     plt.title("Total Pulses Shifted by Trigger Time, n=%i"%len(shifted_pulses))
     plt.xlabel("True Pulse Time - Trigger Time [ns]")
     plt.ylabel("Counts")
-    plt.yscale('log')
+    if logscale == True:
+        plt.yscale('log')
     plt.hist(flattened_pulses, range=(min(flattened_pulses), max(flattened_pulses)), bins=100, histtype='stepfilled', alpha=0.5)
     plt.axvline(x=0, color='green')
-    if len(shifted_pulses) != num_use:
+    if len(shifted_pulses) != num_use and logscale == True:
+        imgname = output_folder+'trigger_resolution_ylog_all.png'
+    elif len(shifted_pulses) != num_use:
         imgname = output_folder+'trigger_resolution_all.png'
+    elif logscale == True:
+        imgname = output_folder+'trigger_resolution_ylog_'+str(num_use)+'.png'
     else:
         imgname = output_folder+'trigger_resolution_'+str(num_use)+'.png'
     plt.savefig(imgname)
