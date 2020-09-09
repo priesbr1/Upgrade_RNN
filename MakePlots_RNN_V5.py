@@ -410,7 +410,7 @@ def main(config=1):
         plot_2dhist(numpy.log10(energy_true), numpy.log10(energy_predicted), min(numpy.log10(energy_true)), max(numpy.log10(energy_true)), 'energy [log10(E/GeV)]', weights, gen_filename=save_folder_name)
         plot_1dhist(numpy.log10(energy_true), numpy.log10(energy_predicted), min(numpy.log10(energy_true)), max(numpy.log10(energy_true)), 'energy [log10(E/GeV)]', weights, gen_filename=save_folder_name)
     else:
-        plot_2dhist(energy_true, energy_predicted, 0, 200, 'energy [GeV]', weights, gen_filename=save_folder_name)
+        plot_2dhist(energy_true, energy_predicted, min(energy_true), max(energy_true), 'energy [GeV]', weights, gen_filename=save_folder_name)
         plot_1dhist(energy_true, energy_predicted, min(energy_true), max(energy_true), 'energy [GeV]', weights, gen_filename=save_folder_name)
     
     if reco:
@@ -421,7 +421,7 @@ def main(config=1):
         plot_error_vs_reco(azimuth_true, azimuth_predicted, azimuth_reco, min(energy_true), max(energy_true), 'azimuth [degrees]', quantity2='energy [GeV]', x=labels[:,0], gen_filename=save_folder_name)
         plot_error_vs_reco(zenith_true, zenith_predicted, zenith_reco, min(energy_true), max(energy_true), 'zenith [degrees]', quantity2='energy [GeV]', x=labels[:,0], gen_filename=save_folder_name)
     else:
-        plot_error(energy_true, energy_predicted, 0, 200, 'energy [GeV]', gen_filename=save_folder_name)
+        plot_error(energy_true, energy_predicted, min(energy_true), max(energy_true), 'energy [GeV]', gen_filename=save_folder_name)
         plot_error(azimuth_true, azimuth_predicted, 0, 360, 'azimuth [degrees]', gen_filename=save_folder_name)
         plot_error(zenith_true, zenith_predicted, 0, 180, 'zenith [degrees]', gen_filename=save_folder_name)
         plot_error(azimuth_true, azimuth_predicted, min(energy_true), max(energy_true), 'azimuth [degrees]', 'energy [GeV]', energy_true, gen_filename=save_folder_name)

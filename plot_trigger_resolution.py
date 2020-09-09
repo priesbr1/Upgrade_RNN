@@ -109,7 +109,7 @@ def get_event_info(filename_list, pulse_type, num_use):
 
     return cut_pulses
 
-def plot_trig_resolution(shifted_pulses, output_folder, logscale=False, num_use):
+def plot_trig_resolution(shifted_pulses, output_folder, logscale, num_use):
 
     # Flatten pulse array for plotting
     flattened_pulses = [pulse for pulse_list in shifted_pulses for pulse in pulse_list]
