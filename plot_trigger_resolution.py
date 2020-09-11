@@ -139,4 +139,4 @@ if '*' in input_files or '?' in input_files:
     input_files = sorted(glob.glob(input_files))
 
 shifted_pulses = get_event_info(input_files, pulse_type, num_use)
-plot_trig_resolution(shifted_pulses, output_folder, num_use)
+plot_trig_resolution(shifted_pulses, output_folder, logscale, num_use)
