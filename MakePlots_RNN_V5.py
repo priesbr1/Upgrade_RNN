@@ -12,7 +12,7 @@ import argparse
 
 from Generators_V5 import DataGenerator, SplitGenerator
 from Attention import AttentionWithContext
-from Plots import plot_uncertainty, plot_2dhist, plot_1dhist, plot_error, plot_loss, plot_error_vs_reco, plot_inputs, plot_outputs
+from Plots import plot_uncertainty, plot_2dhist, plot_1dhist, plot_error, plot_loss, plot_error_vs_reco
 
 import keras
 import tensorflow as tf
@@ -176,9 +176,6 @@ def main(config=1):
 
     vocab_size = 15700
     time_samples = no_hits
-
-    print("Plotting input distributions")
-    plot_inputs(ff['features/pulse_time'][:], ff['features/pulse_charge'][:], num_use=10000, gen_filename=save_folder_name)
 
     # Instantiate the base model (or "template" model).
     # We recommend doing this with under a CPU device scope,
@@ -395,17 +392,6 @@ def main(config=1):
     azimuth_sigma = numpy.degrees(numpy.sqrt(numpy.divide((dx_sigma*dy_predicted)**2+(dy_sigma*dx_predicted)**2,(dx_predicted**2+dy_predicted**2)**2)))
 
     #Make plots
-    print("Plotting output distributions")
-    if use_log_energy:
-        plot_outputs(numpy.log10(energy_true), min(numpy.log10(energy_true)), max(numpy.log10(energy_true)), 'energy [log10(E/GeV)]', weights, num_use=10000, gen_filename=save_folder_name)
-    else:
-        plot_outputs(energy_true, min(energy_true), max(energy_true), 'energy [GeV]', weights, num_use=10000, gen_filename=save_folder_name)
-    plot_outputs(dx_true, -1.0, 1.0, 'dx [m]', weights, num_use=10000, gen_filename=save_folder_name)
-    plot_outputs(dy_true, -1.0, 1.0, 'dy [m]', weights, num_use=10000, gen_filename=save_folder_name)
-    plot_outputs(dz_true, -1.0, 1.0, 'dz [m]', weights, num_use=10000, gen_filename=save_folder_name)
-    plot_outputs(azimuth_true, 0, 360, 'azimuth [degrees]', weights, num_use=10000, gen_filename=save_folder_name)
-    plot_outputs(zenith_true, 0, 180, 'zenith [degrees]', weights, num_use=10000, gen_filename=save_folder_name)
-
     if use_log_energy:
         plot_2dhist(numpy.log10(energy_true), numpy.log10(energy_predicted), min(numpy.log10(energy_true)), max(numpy.log10(energy_true)), 'energy [log10(E/GeV)]', weights, gen_filename=save_folder_name)
         plot_1dhist(numpy.log10(energy_true), numpy.log10(energy_predicted), min(numpy.log10(energy_true)), max(numpy.log10(energy_true)), 'energy [log10(E/GeV)]', weights, gen_filename=save_folder_name)
@@ -424,8 +410,8 @@ def main(config=1):
         plot_error(energy_true, energy_predicted, min(energy_true), max(energy_true), 'energy [GeV]', gen_filename=save_folder_name)
         plot_error(azimuth_true, azimuth_predicted, 0, 360, 'azimuth [degrees]', gen_filename=save_folder_name)
         plot_error(zenith_true, zenith_predicted, 0, 180, 'zenith [degrees]', gen_filename=save_folder_name)
-        plot_error(azimuth_true, azimuth_predicted, min(energy_true), max(energy_true), 'azimuth [degrees]', 'energy [GeV]', energy_true, gen_filename=save_folder_name)
-        plot_error(zenith_true, zenith_predicted, min(energy_true), max(energy_true), 'zenith [degrees]', 'energy [GeV]', energy_true, gen_filename=save_folder_name)
+        plot_error(azimuth_true, azimuth_predicted, 0, 200, 'azimuth [degrees]', 'energy [GeV]', energy_true, gen_filename=save_folder_name)
+        plot_error(zenith_true, zenith_predicted, 0, 200, 'zenith [degrees]', 'energy [GeV]', energy_true, gen_filename=save_folder_name)
 
     plot_2dhist(dx_true, dx_predicted, -1.0, 1.0, 'dx [m]', weights, gen_filename=save_folder_name)
     plot_2dhist(dy_true, dy_predicted, -1.0, 1.0, 'dy [m]', weights, gen_filename=save_folder_name)
