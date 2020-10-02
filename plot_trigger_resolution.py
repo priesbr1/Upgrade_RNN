@@ -37,6 +37,7 @@ print("Saving to %s"%output_folder)
 def get_event_info(filename_list, pulse_type, num_use):
 
     all_pulse_times = []
+    DC_pulse_times = []
 
     if type(filename_list) == str:
         filename_list = [filename_list]
@@ -86,11 +87,18 @@ def get_event_info(filename_list, pulse_type, num_use):
                         continue
 
                     for omkey, pulseseries in pulseseriesmap: # Go through each event
-                        pulse_times = []
+                        all_pulses = []
+                        DC_pulses = []
                         for pulse in pulseseries: # Grab pulse information
-                            pulse_times.append(pulse.time - trigger_time) # Shift pulse by event trigger time
+                            all_pulses.append(pulse.time - trigger_time)
+                            if (omkey.string <= 86) and (omkey.string >= 79) and (omkey.om >= 11): # Select DeepCore DOMs in DeepCore fiducial volume
+                                DC_pulses.append(pulse.time - trigger_time)
+                            elif (omkey.string >= 87) and (omkey.string <= 93): # All Upgrade DOMs in DeepCore fiducial volume
+                                DC_pulses.append(pulse.time - trigger_time)
 
-                    all_pulse_times.append(pulse_times)
+                    all_pulse_times.append(all_pulses)
+                    if len(DC_pulses) > 0:
+                        DC_pulses_times.append(DC_pulses)
                     del pulseseriesmap
 
                 else:
@@ -100,33 +108,46 @@ def get_event_info(filename_list, pulse_type, num_use):
 
     # Cut to maximum number of events, if applicable
     if num_use and len(all_pulse_times) > num_use:
-        cut_pulses = all_pulse_times[:num_use]
-        removed_events = len(all_pulse_times) - len(cut_pulses)
-        print("Removed %i events -- using remaining %i events"%(removed_events, len(cut_pulses)))
+        cut_all_pulses = all_pulse_times[:num_use]
+        removed_events = len(all_pulse_times) - len(cut_all_pulses)
+        print("Removed %i events -- using remaining %i events"%(removed_events, len(cut_all_pulses)))
     else:
-        cut_pulses = all_pulse_times
-        print("Keeping all %i events"%len(cut_pulses))
+        cut_all_pulses = all_pulse_times
+        print("Keeping all %i events"%len(cut_all_pulses))
 
-    return cut_pulses
+    if num_use and len(DC_pulse_times) > num_use:
+        cut_DC_pulses = DC_pulse_times[:num_use]
+        removed_events = len(DC_pulse_times) - len(cut_DC_pulses)
+        print("Removed %i DeepCore events -- using remaining %i events"%(removed_events, len(cut_DC_pulses)))
+    else:
+        cut_DC_pulses = DC_pulse_times
+        print("Keeping all %i DeepCore events"%len(cut_DC_pulses))
 
-def plot_trig_resolution(shifted_pulses, output_folder, logscale, num_use):
+    return cut_all_pulses, cut_DC_pulses
+
+def plot_trig_resolution(shifted_all_pulses, shifted_DC_pulses, output_folder, logscale, num_use):
 
     # Flatten pulse array for plotting
-    flattened_pulses = [pulse for pulse_list in shifted_pulses for pulse in pulse_list]
-    print("Number of flattened pulses:", len(flattened_pulses))
+    flattened_all_pulses = [pulse for pulse_list in shifted_all_pulses for pulse in pulse_list]
+    flattened_DC_pulses = [pulse for pulse_list in shifted_DC_pules for pulse in pulse_list]
+    print("Number of flattened pulses:", len(flattened_all_pulses))
+    print("Number of flattened DC pulses:", len(flattened_DC))
 
     # Plotting code
     plt.figure()
-    plt.title("Total Pulses Shifted by Trigger Time, n=%i"%len(shifted_pulses))
+    plt.title("Total Pulses Shifted by Trigger Time")
     plt.xlabel("True Pulse Time - Trigger Time [ns]")
     plt.ylabel("Counts")
     if logscale == True:
         plt.yscale('log')
-    plt.hist(flattened_pulses, range=(min(flattened_pulses), max(flattened_pulses)), bins=100, histtype='stepfilled', alpha=0.5)
+    plt.hist(flattened_all_pulses, range=(min(flattened_all_pulses), max(flattened_all_pulses)), bins=100, histtype='stepfilled', alpha=0.5, label="All, n=%i"%(len(shifted_all_pulses)))
+    plt.hist(flattened_DC_pulses, range=(min(flattened_DC_pulses), max(flattened_DC_pulses)), bins=100, histtype='stepfilled', alpha=0.5, label="DC, n=%i"%(len(shifted_DC_pulses)))
     plt.axvline(x=0, color='green')
-    if len(shifted_pulses) != num_use and logscale == True:
+    plt.legend(loc="best")
+    plt.tight_layout()
+    if len(shifted_all_pulses) != num_use and logscale == True:
         imgname = output_folder+'trigger_resolution_ylog_all.png'
-    elif len(shifted_pulses) != num_use:
+    elif len(shifted_all_pulses) != num_use:
         imgname = output_folder+'trigger_resolution_all.png'
     elif logscale == True:
         imgname = output_folder+'trigger_resolution_ylog_'+str(num_use)+'.png'
@@ -138,5 +159,5 @@ def plot_trig_resolution(shifted_pulses, output_folder, logscale, num_use):
 if '*' in input_files or '?' in input_files:
     input_files = sorted(glob.glob(input_files))
 
-shifted_pulses = get_event_info(input_files, pulse_type, num_use)
-plot_trig_resolution(shifted_pulses, output_folder, logscale, num_use)
+shifted_all_pulses, shifted_DC_pulses = get_event_info(input_files, pulse_type, num_use)
+plot_trig_resolution(shifted_all_pulses, shifted_DC_pulses, output_folder, logscale, num_use)
