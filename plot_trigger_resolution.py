@@ -98,7 +98,7 @@ def get_event_info(filename_list, pulse_type, num_use):
 
                     all_pulse_times.append(all_pulses)
                     if len(DC_pulses) > 0:
-                        DC_pulses_times.append(DC_pulses)
+                        DC_pulse_times.append(DC_pulses)
                     del pulseseriesmap
 
                 else:
@@ -129,9 +129,9 @@ def plot_trig_resolution(shifted_all_pulses, shifted_DC_pulses, output_folder, l
 
     # Flatten pulse array for plotting
     flattened_all_pulses = [pulse for pulse_list in shifted_all_pulses for pulse in pulse_list]
-    flattened_DC_pulses = [pulse for pulse_list in shifted_DC_pules for pulse in pulse_list]
+    flattened_DC_pulses = [pulse for pulse_list in shifted_DC_pulses for pulse in pulse_list]
     print("Number of flattened pulses:", len(flattened_all_pulses))
-    print("Number of flattened DC pulses:", len(flattened_DC))
+    print("Number of flattened DC pulses:", len(flattened_DC_pulses))
 
     # Plotting code
     plt.figure()
