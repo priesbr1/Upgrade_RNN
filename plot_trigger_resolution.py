@@ -91,9 +91,11 @@ def get_event_info(filename_list, pulse_type, num_use):
                         DC_pulses = []
                         for pulse in pulseseries: # Grab pulse information
                             all_pulses.append(pulse.time - trigger_time)
-                            if (omkey.string <= 86) and (omkey.string >= 79) and (omkey.om >= 11): # Select DeepCore DOMs in DeepCore fiducial volume
+                            if (omkey.string <= 86) and (omkey.string >= 79) and (omkey.om >= 11): # Select DeepCore DOMs in DeepCore fiducial volume (bottom 50 on all DeepCore strings)
                                 DC_pulses.append(pulse.time - trigger_time)
-                            elif (omkey.string >= 87) and (omkey.string <= 93): # All Upgrade DOMs in DeepCore fiducial volume
+                            elif (omkey.string in [26,27,35,36,37,45,46]) and (omkey.om >= 38): # Select IceCube Gen-1 DOMs in DeepCore fiducial volume (bottom 23 on given strings)
+                                DC_pulses.append(pulse.time - trigger_time)
+                            elif (omkey.string >= 87) and (omkey.string <= 93): # Select Upgrade DOMs in DeepCore fiducial volume (all on all Upgrade strings)
                                 DC_pulses.append(pulse.time - trigger_time)
 
                     all_pulse_times.append(all_pulses)
