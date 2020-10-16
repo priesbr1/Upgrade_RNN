@@ -18,7 +18,7 @@ def plot_uncertainty(true, predicted, sigma, quantity, weights, gen_filename='pa
     if str.split(quantity)[0] in ["dx","dy","dz"]:
         plt.title(str.split(quantity)[0]+'Pull Plot')
     else:
-        plt.title(str.capitalize(str.split(quantity)[0])+'Pull Plot')
+        plt.title(str.capitalize(str.split(quantity)[0])+' Pull Plot')
     plt.xlabel('Calculated/Predicted Uncertainty '+str.split(quantity)[1])
     plt.ylabel('Normalized Counts')
     pull = numpy.divide(errors,sigma)
