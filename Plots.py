@@ -31,11 +31,11 @@ def plot_uncertainty(true, predicted, sigma, quantity, weights, gen_filename='pa
 
     # Set uncertainty cutoff to be maximum of range for energy, zenith, azimuth
     if 'energy' in quantity:
-        sigma_cutoff = math.ceil(float(numpy.max(true))/100)*100 # Rounds to nearset hundred
+        sigma_cutoff = math.ceil(float(numpy.max(true))/100)*100 # Rounds up to nearest hundred GeV
     elif 'zenith' in quantity:
-        sigma_cutoff = numpy.pi
+        sigma_cutoff = 180 # degrees
     elif 'azimuth' in quantity:
-        sigma_cutoff = 2*numpy.pi
+        sigma_cutoff = 360 # degrees
     else:
         sigma_cutoff = numpy.inf
 
