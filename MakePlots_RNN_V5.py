@@ -410,8 +410,8 @@ def main(config=1):
         plot_error(energy_true, energy_predicted, min(energy_true), max(energy_true), 'energy [GeV]', gen_filename=save_folder_name)
         plot_error(azimuth_true, azimuth_predicted, 0, 360, 'azimuth [degrees]', gen_filename=save_folder_name)
         plot_error(zenith_true, zenith_predicted, 0, 180, 'zenith [degrees]', gen_filename=save_folder_name)
-        plot_error(azimuth_true, azimuth_predicted, 0, 200, 'azimuth [degrees]', 'energy [GeV]', energy_true, gen_filename=save_folder_name)
-        plot_error(zenith_true, zenith_predicted, 0, 200, 'zenith [degrees]', 'energy [GeV]', energy_true, gen_filename=save_folder_name)
+        plot_error(azimuth_true, azimuth_predicted, min(energy_true), max(energy_true), 'azimuth [degrees]', 'energy [GeV]', energy_true, gen_filename=save_folder_name)
+        plot_error(zenith_true, zenith_predicted, min(energy_true), max(energy_true), 'zenith [degrees]', 'energy [GeV]', energy_true, gen_filename=save_folder_name)
 
     plot_2dhist(dx_true, dx_predicted, -1.0, 1.0, 'dx [m]', weights, gen_filename=save_folder_name)
     plot_2dhist(dy_true, dy_predicted, -1.0, 1.0, 'dy [m]', weights, gen_filename=save_folder_name)
