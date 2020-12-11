@@ -12,7 +12,7 @@ import argparse
 
 from Generators_V5 import DataGenerator, SplitGenerator
 from Attention import AttentionWithContext
-from Plots import plot_uncertainty, plot_2dhist, plot_1dhist, plot_error, plot_loss, plot_error_vs_reco
+from Plots import plot_uncertainty, plot_2dhist, plot_2dhist_contours, plot_1dhist, plot_error, plot_loss, plot_error_vs_reco
 
 import keras
 import tensorflow as tf
@@ -394,9 +394,11 @@ def main(config=1):
     #Make plots
     if use_log_energy:
         plot_2dhist(numpy.log10(energy_true), numpy.log10(energy_predicted), min(numpy.log10(energy_true)), max(numpy.log10(energy_true)), 'energy [log10(E/GeV)]', weights, gen_filename=save_folder_name)
+        plot_2dhist_contours(numpy.log10(energy_true), numpy.log10(energy_predicted), min(numpy.log10(energy_true)), max(numpy.log10(energy_true)), 'energy [log10(E/GeV)]', weights, gen_filename=save_folder_name)
         plot_1dhist(numpy.log10(energy_true), numpy.log10(energy_predicted), min(numpy.log10(energy_true)), max(numpy.log10(energy_true)), 'energy [log10(E/GeV)]', weights, gen_filename=save_folder_name)
     else:
         plot_2dhist(energy_true, energy_predicted, min(energy_true), max(energy_true), 'energy [GeV]', weights, gen_filename=save_folder_name)
+        plot_2dhist_contours(energy_true, energy_predicted, min(energy_true), max(energy_true), 'energy [GeV]', weights, gen_filename=save_folder_name)
         plot_1dhist(energy_true, energy_predicted, min(energy_true), max(energy_true), 'energy [GeV]', weights, gen_filename=save_folder_name)
     
     if reco:
@@ -418,6 +420,11 @@ def main(config=1):
     plot_2dhist(dz_true, dz_predicted, -1.0, 1.0, 'dz [m]', weights, gen_filename=save_folder_name)
     plot_2dhist(azimuth_true, azimuth_predicted, 0, 360, 'azimuth [degrees]', weights, gen_filename=save_folder_name)
     plot_2dhist(zenith_true, zenith_predicted, 0, 180, 'zenith [degrees]', weights, gen_filename=save_folder_name)
+    plot_2dhist_contours(dx_true, dx_predicted, -1.0, 1.0, 'dx [m]', weights, gen_filename=save_folder_name)
+    plot_2dhist_contours(dy_true, dy_predicted, -1.0, 1.0, 'dy [m]', weights, gen_filename=save_folder_name)
+    plot_2dhist_contours(dz_true, dz_predicted, -1.0, 1.0, 'dz [m]', weights, gen_filename=save_folder_name)
+    plot_2dhist_contours(azimuth_true, azimuth_predicted, 0, 360, 'azimuth [degrees]', weights, gen_filename=save_folder_name)
+    plot_2dhist_contours(zenith_true, zenith_predicted, 0, 180, 'zenith [degrees]', weights, gen_filename=save_folder_name)
     plot_1dhist(dx_true, dx_predicted, -1.0, 1.0, 'dx [m]', weights, gen_filename=save_folder_name)
     plot_1dhist(dy_true, dy_predicted, -1.0, 1.0, 'dy [m]', weights, gen_filename=save_folder_name)
     plot_1dhist(dz_true, dz_predicted, -1.0, 1.0, 'dz [m]', weights, gen_filename=save_folder_name)

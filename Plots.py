@@ -124,6 +124,77 @@ def plot_loss(history, test, metric, variable, no_epochs, gen_filename='path/sav
         imgname = gen_filename+str.lower(variable)+'_loss.png'
     plt.savefig(imgname)
 
+def find_contours_2D(x_values,y_values,xbins,weights=None,c1=16,c2=84):
+    """
+    Find upper and lower contours and median
+    x_values = array, input for hist2d for x axis (typically truth)
+    y_values = array, input for hist2d for y axis (typically reconstruction)
+    xbins = values for the starting edge of the x bins (output from hist2d)
+    c1 = percentage for lower contour bound (16% - 84% means a 68% band, so c1 = 16)
+    c2 = percentage for upper contour bound (16% - 84% means a 68% band, so c2=84)
+    Returns:
+        x = values for xbins, repeated for plotting (i.e. [0,0,1,1,2,2,...]
+        y_median = values for y value medians per bin, repeated for plotting (i.e. [40,40,20,20,50,50,...]
+        y_lower = values for y value lower limits per bin, repeated for plotting (i.e. [30,30,10,10,20,20,...]
+        y_upper = values for y value upper limits per bin, repeated for plotting (i.e. [50,50,40,40,60,60,...]
+    """
+    if weights is not None:
+        import wquantiles as wq
+    y_values = numpy.array(y_values)
+    indices = numpy.digitize(x_values,xbins)
+    r1_save = []
+    r2_save = []
+    median_save = []
+    for i in range(1,len(xbins)):
+        mask = indices==i
+        if len(y_values[mask])>0:
+            if weights is None:
+                r1, m, r2 = numpy.percentile(y_values[mask],[c1,50,c2])
+            else:
+                r1 = wq.quantile(y_values[mask],weights[mask],c1/100.)
+                r2 = wq.quantile(y_values[mask],weights[mask],c2/100.)
+                m = wq.median(y_values[mask],weights[mask])
+        else:
+            print(i,'empty bin')
+            r1 = 0
+            m = 0
+            r2 = 0
+        median_save.append(m)
+        r1_save.append(r1)
+        r2_save.append(r2)
+    median = numpy.array(median_save)
+    lower = numpy.array(r1_save)
+    upper = numpy.array(r2_save)
+
+    x = list(itertools.chain(*zip(xbins[:-1],xbins[1:])))
+    y_median = list(itertools.chain(*zip(median,median)))
+    y_lower = list(itertools.chain(*zip(lower,lower)))
+    y_upper = list(itertools.chain(*zip(upper,upper)))
+
+    return x, y_median, y_lower, y_upper
+
+def plot_2dhist_contours(true, predicted, xymin, xymax, quantity, weights, gen_filename='path/save_folder/'):
+    plt.figure()
+    if str.split(quantity)[0] in ["dx","dy","dz"]:
+        plt.title('Predicted vs. True ' + str.split(quantity)[0])
+        plt.xlabel('True ' + quantity)
+        plt.ylabel('Predicted ' + quantity)
+    else:
+        plt.title('Predicted vs. True ' + str.capitalize(str.split(quantity)[0]))
+        plt.xlabel('True ' + str.capitalize(str.split(quantity)[0]) + ' ' + str.split(quantity)[1])
+        plt.ylabel('Predicted ' + str.capitalize(str.split(quantity)[0]) + ' ' + str.split(quantity)[1])
+    plt.hist2d(true, predicted, weights=weights, bins=100, range=[[xymin,xymax],[xymin,xymax]], norm=matplotlib.colors.LogNorm())
+    x, y, y_low, y_up = find_contours_2D(true, predicted, bins, weights=weights)
+    plt.plot(x, y, color='r', label='Median')
+    plt.plot(x, y_l, color='r', linestyle='dashed', label='68% band')
+    plt.plot(x, y_u, color='r', linestyle='dashed')
+    plt.legend(loc='best')
+    bar = plt.colorbar()
+    bar.set_label('Counts')
+    plt.plot([xymin,xymax], [xymin,xymax], color='black', linestyle='dashed')
+    imgname = gen_filename+str.split(quantity)[0]+'_contours_2D.png'
+    plt.savefig(imgname)
+
 def plot_2dhist(true, predicted, xymin, xymax, quantity, weights, gen_filename='path/save_folder/'):
     plt.figure()
     if str.split(quantity)[0] in ["dx","dy","dz"]:
