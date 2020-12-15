@@ -5,6 +5,7 @@ import math
 import numpy
 import numpy as np
 import scipy
+import itertools
 
 def plot_uncertainty(true, predicted, sigma, quantity, weights, gen_filename='path/save_folder/'):
 
@@ -183,11 +184,11 @@ def plot_2dhist_contours(true, predicted, xymin, xymax, quantity, weights, gen_f
         plt.title('Predicted vs. True ' + str.capitalize(str.split(quantity)[0]))
         plt.xlabel('True ' + str.capitalize(str.split(quantity)[0]) + ' ' + str.split(quantity)[1])
         plt.ylabel('Predicted ' + str.capitalize(str.split(quantity)[0]) + ' ' + str.split(quantity)[1])
-    plt.hist2d(true, predicted, weights=weights, bins=100, range=[[xymin,xymax],[xymin,xymax]], norm=matplotlib.colors.LogNorm())
-    x, y, y_low, y_up = find_contours_2D(true, predicted, bins, weights=weights)
-    plt.plot(x, y, color='r', label='Median')
-    plt.plot(x, y_l, color='r', linestyle='dashed', label='68% band')
-    plt.plot(x, y_u, color='r', linestyle='dashed')
+    cnts, xbins, ybins, img = plt.hist2d(true, predicted, weights=weights, bins=100, range=[[xymin,xymax],[xymin,xymax]], norm=matplotlib.colors.LogNorm())
+    x, y_med, y_lower, y_upper = find_contours_2D(true, predicted, xbins, weights=weights)
+    plt.plot(x, y_med, color='r', label='Median')
+    plt.plot(x, y_lower, color='r', linestyle='dashed', label='68% band')
+    plt.plot(x, y_upper, color='r', linestyle='dashed')
     plt.legend(loc='best')
     bar = plt.colorbar()
     bar.set_label('Counts')
