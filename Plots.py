@@ -132,7 +132,7 @@ def find_contours_2D(x_values,y_values,xbins,weights=None,c1=16,c2=84):
     y_values = array, input for hist2d for y axis (typically reconstruction)
     xbins = values for the starting edge of the x bins (output from hist2d)
     c1 = percentage for lower contour bound (16% - 84% means a 68% band, so c1 = 16)
-    c2 = percentage for upper contour bound (16% - 84% means a 68% band, so c2=84)
+    c2 = percentage for upper contour bound (16% - 84% means a 68% band, so c2 = 84)
     Returns:
         x = values for xbins, repeated for plotting (i.e. [0,0,1,1,2,2,...]
         y_median = values for y value medians per bin, repeated for plotting (i.e. [40,40,20,20,50,50,...]
