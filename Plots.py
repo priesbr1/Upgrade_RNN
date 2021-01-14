@@ -589,18 +589,20 @@ def plot_error(true, predicted, minimum, maximum, quantity, quantity2=0, x=0, ge
     plt.errorbar(centers, medians, yerr=[medians-err_from, err_to-medians], xerr=[ centers-ranges[:-1], ranges[1:]-centers ], fmt='o')
     plt.plot([minimum,maximum], [0,0], color='k')
     plt.xlim(minimum,maximum)
-    if str.split(quantity)[0] in ["dx","dy","dz"] and str.split(quantity2)[0] in ["dx","dy","dz"]:
+
+    if str.split(quantity)[0] in ["dx","dy","dz"] and str.split(quantity2)[0] in ["dx","dy","dz"]: # dx/dy/dz to dx/dy/dz
         plt.title(str.split(quantity)[0] + ' Error vs. ' + str.split(quantity2)[0])
         plt.xlabel(quantity2)
-    elif str.split(quantity)[0] in ["dx","dy","dz"]:
+    elif str.split(quantity)[0] in ["dx","dy","dz"]: # dx/dy/dz to other
         plt.title(str.split(quantity)[0] + ' Error vs. ' + str.capitalize(str.split(quantity2)[0]))
         plt.xlabel(str.capitalize(str.split(quantity2)[0]) + ' ' + str.split(quantity2)[1])
-    elif str.split(quantity2)[0] in ["dx","dy","dz"]:
+    elif str.split(quantity2)[0] in ["dx","dy","dz"]: # other to dx/dy/dz
         plt.title(str.capitalize(str.split(quantity)[0]) + ' Error vs. ' + str.split(quantity2)[0])
         plt.xlabel(quantity2)
-    else:
+    else: # other to other
         plt.title(str.capitalize(str.split(quantity)[0]) + ' Error vs. ' + str.capitalize(str.split(quantity2)[0]))
         plt.xlabel(str.capitalize(str.split(quantity2)[0]) + ' ' + str.split(quantity2)[1])
+
     if str.split(quantity)[0] in ["dx","dy","dz"]:
         plt.ylabel(str.split(quantity)[0] + ' Error ' + str.split(quantity)[1])
     elif 'energy' in quantity:
@@ -608,6 +610,72 @@ def plot_error(true, predicted, minimum, maximum, quantity, quantity2=0, x=0, ge
     else:
         plt.ylabel(str.capitalize(str.split(quantity)[0]) + ' Error ' + str.split(quantity)[1])
     imgname = gen_filename+str.split(quantity)[0]+'_'+str.split(quantity2)[0]+'_err.png'
+    plt.savefig(imgname)
+
+def plot_error_contours(true, predicted, minimum, maximum, quantity, quantity2=0, x=0, gen_filename='path/save_folder/'):
+    if quantity2 == 0:
+        x = true
+        quantity2 = quantity
+
+    fractional_errors = predicted-true
+
+    if 'energy' in quantity:
+        fractional_errors = ((predicted-true)/true)*100. # in percent
+    elif 'azimuth' in quantity and 'cos' not in quantity:
+        fractional_errors = numpy.array([(predicted[i]-true[i]) if math.fabs((predicted[i]-true[i])) < 180 else ((predicted[i]-true[i]-360) if predicted[i] > true[i] else (predicted[i]-true[i]+360)) for i in range(len(true))])
+    else:
+        fractional_errors = predicted-true
+
+    plt.figure()
+    if 'energy' in quantity:
+        cnts, xbins, ybins, img = plt.hist2d(true, fractional_errors, bins=100, range=[[minimum,maximum],[-100,100]], norm=matplotlib.colors.LogNorm()) # -100 to 100 percent y-axis
+    else:
+        cnts, xbins, ybins, img = plt.hist2d(true, fractional_errors, bins=100, range=[[minimum,maximum],[-1*max(true),max(true)]], norm=matplotlib.colors.LogNorm())
+    x, y_med, y_lower, y_upper = find_contours_2D(true, predicted, xbins)
+    plt.plot(x, y_med, color='r', label='Median')
+    plt.plot(x, y_lower, color='r', linestyle='dashed', label='68% band')
+    plt.plot(x, y_upper, color='r', linestyle='dashed')
+    plt.legend(loc='best')
+    bar = plt.colorbar()
+    bar.set_label('Counts')
+
+    if quantity == 'cos(zenith) []' and quantity2 == 'cos(zenith) []': # cosz to cosz
+        plt.title('Cos(Zenith) Error vs. Cos(Zenith)')
+        plt.xlabel('Cos(Zenith)')
+    elif quantity == 'cos(zenith) []' and str.split(quantity2)[0] in ["dx","dy","dz"]: # cosz to dx/dy/dz
+        plt.title('Cos(Zenith) Error vs. ' + str.split(quantity2)[0])
+        plt.xlabel(quantity2)
+    elif quantity == 'cos(zenith) []': # cosz to other
+        plt.title('Cos(Zenith) Error vs. ' + str.capitalize(str.split(quantity2)[0]))
+        plt.xlabel(str.capitalize(str.split(quantity2)[0]))
+    elif str.split(quantity)[0] in ["dx","dy","dz"] and str.split(quantity2)[0] in ["dx","dy","dz"]: # dx/dy/dz to dx/dy/dz
+        plt.title(str.split(quantity)[0] + ' Error vs. ' + str.split(quantity2)[0])
+        plt.xlabel(quantity2)
+    elif str.split(quantity)[0] in ["dx","dy","dz"]: # dx/dy/dz to other
+        plt.title(str.split(quantity)[0] + ' Error vs. ' + str.capitalize(str.split(quantity2)[0]))
+        plt.xlabel(str.capitalize(str.split(quantity2)[0]) + ' ' + str.split(quantity2)[1])
+    elif str.split(quantity2)[0] in ["dx","dy","dz"]: # other to dx/dy/dz
+        plt.title(str.capitalize(str.split(quantity)[0]) + ' Error vs. ' + str.split(quantity2)[0])
+        plt.xlabel(quantity2)
+    else: # other to other
+        plt.title(str.capitalize(str.split(quantity)[0]) + ' Error vs. ' + str.capitalize(str.split(quantity2)[0]))
+        plt.xlabel(str.capitalize(str.split(quantity2)[0]) + ' ' + str.split(quantity2)[1])
+
+    if quantity == 'cos(zenith) []':
+        plt.ylabel('Cos(Zenith) Error')
+    elif str.split(quantity)[0] in ["dx","dy","dz"]:
+        plt.ylabel(str.split(quantity)[0] + ' Error ' + str.split(quantity)[1])
+    elif 'energy' in quantity:
+        plt.ylabel(str.capitalize(str.split(quantity)[0]) + ' Percent Error')
+    else:
+        plt.ylabel(str.capitalize(str.split(quantity)[0]) + ' Error ' + str.split(quantity)[1])
+
+    if quantity == 'cos(zenith) []' and quantity2 == 'cos(zenith) []':
+        imgname = gen_filename+'cosz_cosz_error_contours.png'
+    elif quantity == 'cos(zenith) []':
+        imgname = gen_filename+'cosz_'+str.split(quantity2)[0]+'_err_contours.png'
+    else:
+        imgname = gen_filename+str.split(quantity)[0]+'_'+str.split(quantity2)[0]+'_err_contours.png'
     plt.savefig(imgname)
 
 def plot_error_vs_reco(true, predicted, reco, minimum, maximum, quantity, quantity2=0, x=0, gen_filename='path/save_folder/'):
