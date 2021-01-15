@@ -13,7 +13,7 @@ import argparse
 
 from Generators import DataGenerator, SplitGenerator
 from Attention import AttentionWithContext
-from Plots import plot_uncertainty, plot_2dhist, plot_2dhist_contours, plot_1dhist, plot_error, plot_loss, plot_error_vs_reco, plot_inputs, plot_outputs
+from Plots import plot_uncertainty, plot_2dhist, plot_2dhist_contours, plot_1dhist, plot_error, plot_error_contours, plot_loss, plot_error_vs_reco, plot_inputs, plot_outputs
 
 import keras
 import tensorflow as tf
