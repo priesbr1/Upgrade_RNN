@@ -630,7 +630,7 @@ def plot_error_contours(true, predicted, minimum, maximum, quantity, quantity2=0
     if 'energy' in quantity:
         cnts, xbins, ybins, img = plt.hist2d(x, fractional_errors, bins=100, range=[[minimum,maximum],[-100,100]], norm=matplotlib.colors.LogNorm()) # -100 to 100 percent y-axis
     else:
-        cnts, xbins, ybins, img = plt.hist2d(x, fractional_errors, bins=100, range=[[minimum,maximum],[-1*max(true),max(true)]], norm=matplotlib.colors.LogNorm())
+        cnts, xbins, ybins, img = plt.hist2d(x, fractional_errors, bins=100, range=[[minimum,maximum],[-2*max(true),2*max(true)]], norm=matplotlib.colors.LogNorm())
     x, y_med, y_lower, y_upper = find_contours_2D(true, fractional_errors, xbins)
     plt.plot(x, y_med, color='r', label='Median')
     plt.plot(x, y_lower, color='r', linestyle='dashed', label='68% band')
@@ -671,7 +671,7 @@ def plot_error_contours(true, predicted, minimum, maximum, quantity, quantity2=0
         plt.ylabel(str.capitalize(str.split(quantity)[0]) + ' Error ' + str.split(quantity)[1])
 
     if quantity == 'cos(zenith) []' and quantity2 == 'cos(zenith) []':
-        imgname = gen_filename+'cosz_cosz_error_contours.png'
+        imgname = gen_filename+'cosz_cosz_err_contours.png'
     elif quantity == 'cos(zenith) []':
         imgname = gen_filename+'cosz_'+str.split(quantity2)[0]+'_err_contours.png'
     else:
