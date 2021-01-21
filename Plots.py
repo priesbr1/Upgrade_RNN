@@ -638,7 +638,7 @@ def plot_error_contours(true, predicted, minimum, maximum, quantity, quantity2=0
         cnts, xbins, ybins, img = plt.hist2d(x, fractional_errors, bins=100, range=[[minimum,maximum],[-100,100]], norm=matplotlib.colors.LogNorm()) # -100 to 100 percent y-axis
     else:
         cnts, xbins, ybins, img = plt.hist2d(x, fractional_errors, bins=100, range=[[minimum,maximum],[-2*max(true),2*max(true)]], norm=matplotlib.colors.LogNorm())
-    x, y_med, y_lower, y_upper = find_contours_2D(true, fractional_errors, xbins)
+    x, y_med, y_lower, y_upper = find_contours_2D(x, fractional_errors, xbins)
     plt.plot(x, y_med, color='r', label='Median')
     plt.plot(x, y_lower, color='r', linestyle='dashed', label='68% band')
     plt.plot(x, y_upper, color='r', linestyle='dashed')
