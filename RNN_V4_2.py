@@ -425,6 +425,7 @@ def main(config=1):
     plot_2dhist_contours(dz_true, dz_predicted, -1.0, 1.0, 'dz [m]', weights, gen_filename=save_folder_name)
     plot_2dhist_contours(azimuth_true, azimuth_predicted, 0, 360, 'azimuth [degrees]', weights, gen_filename=save_folder_name)
     plot_2dhist_contours(zenith_true, zenith_predicted, 0, 180, 'zenith [degrees]', weights, gen_filename=save_folder_name)
+    plot_2dhist_contours(numpy.cos(zenith_true*numpy.pi/180), numpy.cos(zenith_predicted*numpy.pi/180), -1, 1, 'cos(zenith) []', weights, gen_filename=save_folder_name)
     plot_1dhist(dx_true, dx_predicted, -1.0, 1.0, 'dx [m]', weights, gen_filename=save_folder_name)
     plot_1dhist(dy_true, dy_predicted, -1.0, 1.0, 'dy [m]', weights, gen_filename=save_folder_name)
     plot_1dhist(dz_true, dz_predicted, -1.0, 1.0, 'dz [m]', weights, gen_filename=save_folder_name)

@@ -176,7 +176,11 @@ def find_contours_2D(x_values,y_values,xbins,weights=None,c1=16,c2=84):
 
 def plot_2dhist_contours(true, predicted, xymin, xymax, quantity, weights, gen_filename='path/save_folder/'):
     plt.figure()
-    if str.split(quantity)[0] in ["dx","dy","dz"]:
+    if quantity == 'cos(zenith) []':
+        plt.title('Predicted vs. True Cos(Zenith)')
+        plt.xlabel('True Cos(Zenith)')
+        plt.ylabel('Predicted Cos(Zenith)')
+    elif str.split(quantity)[0] in ["dx","dy","dz"]:
         plt.title('Predicted vs. True ' + str.split(quantity)[0])
         plt.xlabel('True ' + quantity)
         plt.ylabel('Predicted ' + quantity)
@@ -193,7 +197,10 @@ def plot_2dhist_contours(true, predicted, xymin, xymax, quantity, weights, gen_f
     bar = plt.colorbar()
     bar.set_label('Counts')
     plt.plot([xymin,xymax], [xymin,xymax], color='black', linestyle='dashed')
-    imgname = gen_filename+str.split(quantity)[0]+'_contours_2D.png'
+    if quantity == 'cos(zenith) []':
+        imgname = gen_filename+'cosz_contours_2D.png'
+    else:
+        imgname = gen_filename+str.split(quantity)[0]+'_contours_2D.png'
     plt.savefig(imgname)
 
 def plot_2dhist(true, predicted, xymin, xymax, quantity, weights, gen_filename='path/save_folder/'):
