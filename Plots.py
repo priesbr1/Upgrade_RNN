@@ -194,6 +194,7 @@ def plot_2dhist_contours(true, predicted, xymin, xymax, quantity, weights, gen_f
     plt.plot(x, y_lower, color='r', linestyle='dashed', label='68% band')
     plt.plot(x, y_upper, color='r', linestyle='dashed')
     plt.legend(loc='best')
+    plt.grid()
     bar = plt.colorbar()
     bar.set_label('Counts')
     plt.plot([xymin,xymax], [xymin,xymax], color='black', linestyle='dashed')
@@ -644,6 +645,7 @@ def plot_error_contours(true, predicted, minimum, maximum, quantity, quantity2=0
     plt.plot(x, y_lower, color='r', linestyle='dashed', label='68% band')
     plt.plot(x, y_upper, color='r', linestyle='dashed')
     plt.legend(loc='best')
+    plt.grid()
     bar = plt.colorbar()
     bar.set_label('Counts')
 
