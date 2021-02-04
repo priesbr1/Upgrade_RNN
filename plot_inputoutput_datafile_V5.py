@@ -201,8 +201,8 @@ def main(config=1):
     plot_outputs(dx_true, -1.0, 1.0, 'dx [m]', weights, num_use=num_use, logscale=False, gen_filename=save_folder_name)
     plot_outputs(dy_true, -1.0, 1.0, 'dy [m]', weights, num_use=num_use, logscale=False, gen_filename=save_folder_name)
     plot_outputs(dz_true, -1.0, 1.0, 'dz [m]', weights, num_use=num_use, logscale=False, gen_filename=save_folder_name)
-    plot_outputs(azimuth_true, 0, 360, 'azimuth [degrees]', weights, num_use=num_use, logscale=False, gen_filename=save_folder_name)
-    plot_outputs(zenith_true, 0, 180, 'zenith [degrees]', weights, num_use=num_use, logscale=False, gen_filename=save_folder_name)
+    plot_outputs(azimuth_true*180/numpy.pi, 0, 360, 'azimuth [degrees]', weights, num_use=num_use, logscale=False, gen_filename=save_folder_name)
+    plot_outputs(zenith_true*180/numpy.pi, 0, 180, 'zenith [degrees]', weights, num_use=num_use, logscale=False, gen_filename=save_folder_name)
     t_regression_end = time.time()
     if (t_regression_end-t_regression_start)/60. > 1:
         print((t_regression_end-t_regression_start)/60., "minutes to plot regression outputs")
