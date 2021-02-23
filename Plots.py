@@ -7,23 +7,32 @@ import numpy as np
 import scipy
 import itertools
 
-def strip_units(name_with_units):
-    # Assumes format of "base_variable [units]" or "base_variable []" (unitless)
-    return name_with_units[:name_with_units.find('[')-1]
+def strip_units(variable):
+    # Assumes format like "Base_variable [units]", "Base Variable [units]", or "Base_variable" (unitless)
+    if variable.find('[') == -1:
+        return variable # already unitless
+    else:
+        return variable[:variable.find('[')-1]
 
-def file_abbrev(name_with_units):
+def get_units(name_with_units):
+    # Assumes format like "Base_variable [units]", "Base Variable [units]", or "Base_variable" (unitless)
+    if variable.find('[') == -1:
+        return "" # already unitless
+    else:
+        return variable[variable.find('[')+1:variable.find(']')]
+
+def file_abbrev(variable):
     abbrev = ""
-    no_units = strip_units(name_with_units)
-    print(no_units)
-    if "Cos(Zenith)" in name_with_units: # special abbrev for cosz
+    no_units = strip_units(variable)
+    if "Cos(Zenith)" in no_units: # special abbrev for cosz
         abbrev += "cosz"
-    elif "Uncertainty" in name_with_units: # uncertainty --> base + unc
+    elif "Uncertainty" in no_units: # uncertainty --> base + unc
         base_var = no_units[:no_units.find("Uncertainty")-1]
         abbrev += str.lower(base_var) + "unc"
     else: # just lowercase
         abbrev += str.lower(no_units)
     abbrev = abbrev.replace(' ','') # remove any spaces ("track length --> tracklength")
-    
+
     return abbrev
 
 def plot_uncertainty(true, predicted, sigma, quantity, weights, gen_filename='path/save_folder/'):
@@ -35,26 +44,23 @@ def plot_uncertainty(true, predicted, sigma, quantity, weights, gen_filename='pa
         errors = numpy.array([errors[i] if (errors[i] > -180) else (360+errors[i]) for i in range(len(errors))])
     
     plt.figure()
-    if str.split(quantity)[0] in ["dx","dy","dz"]:
-        plt.title(str.split(quantity)[0]+'Pull Plot')
-    else:
-        plt.title(str.capitalize(str.split(quantity)[0])+' Pull Plot')
-    plt.xlabel('Calculated/Predicted Uncertainty '+str.split(quantity)[1])
+    plt.title(strip_units(quantity)+' Pull Plot')
+    plt.xlabel('Calculated/Predicted Uncertainty '+get_units(quantity))
     plt.ylabel('Normalized Counts')
     pull = numpy.divide(errors,sigma)
     plt.hist(pull, bins=60, range=(-8.0,8.0), histtype='step', density=True, weights=weights)
     x = numpy.linspace(-8.0, 8.0, 100)
     y = scipy.stats.norm.pdf(x,0,1)
     plt.plot(x,y)
-    imgname = gen_filename + str.split(quantity)[0] + '_pull.png'
+    imgname = gen_filename + file_abbrev(quantity) + '_pull.png'
     plt.savefig(imgname)
 
     # Set uncertainty cutoff to be maximum of range for energy, zenith, azimuth
-    if 'energy' in quantity:
+    if 'Energy' in quantity:
         sigma_cutoff = math.ceil(float(numpy.max(true))/100)*100 # Rounds up to nearest hundred GeV
-    elif 'zenith' in quantity:
+    elif 'Zenith' in quantity and 'Cos(Zenith)' not in quantity:
         sigma_cutoff = 180 # degrees
-    elif 'azimuth' in quantity:
+    elif 'Azimuth' in quantity:
         sigma_cutoff = 360 # degrees
     else:
         sigma_cutoff = numpy.inf
@@ -64,14 +70,14 @@ def plot_uncertainty(true, predicted, sigma, quantity, weights, gen_filename='pa
         sigma_bounded = sigma[non_inf]
         sigma_overflow = len(sigma)-len(sigma_bounded)
         if sigma_overflow == 1:
-            print(sigma_overflow, " large uncertainty for ", str.split(quantity)[0])
+            print(sigma_overflow, " large uncertainty for ", strip_units(quantity))
         else:
-            print(sigma_overflow, " large uncertainties for ", str.split(quantity)[0])
+            print(sigma_overflow, " large uncertainties for ", strip_units(quantity))
         if len(sigma_bounded) > 0:
             print("New maximum uncertainty:", np.max(sigma_bounded))
             abort_sigma_plot = False
         else:
-            print("Aborting sigma histogram -- no small uncertainties for ", str.split(quantity)[0])
+            print("Aborting sigma histogram -- no small uncertainties for ", strip_units(quantity))
             abort_sigma_plot = True
     else:
         sigma_overflow = None
@@ -79,41 +85,30 @@ def plot_uncertainty(true, predicted, sigma, quantity, weights, gen_filename='pa
 
     if abort_sigma_plot == False:
         plt.figure()
-        if str.split(quantity)[0] in ["dx","dy","dz"]:
-            plt.title('Predicted '+str.split(quantity)[0]+' Uncertainty')
-        else:
-            plt.title('Predicted '+str.capitalize(str.split(quantity)[0])+' Uncertainty')
-        plt.xlabel('Uncertainty ' + str.split(quantity)[1])
+        plt.title('Predicted '+strip_units(quantity)+' Uncertainty')
+        plt.xlabel('Uncertainty ' + get_units(quantity))
         plt.ylabel('Normalized Counts')
         if sigma_overflow:
             plt.hist(sigma_bounded, bins=100, histtype='step', density=True, weights=weights[non_inf])
         else:
             plt.hist(sigma, bins=100, histtype='step', density=True, weights=weights)
-        imgname = gen_filename + str.split(quantity)[0] + '_uncertainty.png'
+        imgname = gen_filename + file_abbrev(quantity) + '_uncertainty.png'
         plt.savefig(imgname)
 
     plt.figure()
-    if str.split(quantity)[0] in ["dx","dy","dz"]:
-        plt.title(str.split(quantity)[0]+' Prediction Error')
-        plt.xlabel(str.split(quantity)[0]+' Error '+str.split(quantity)[1])
-    else:
-        plt.title(str.capitalize(str.split(quantity)[0])+' Prediction Error')
-        plt.xlabel(str.capitalize(str.split(quantity)[0]) + ' Error ' + str.split(quantity)[1])
+    plt.title(strip_units(quantity)+' Prediction Error')
+    plt.xlabel(strip_units(quantity)+' Error '+get_units(quantity))
     plt.ylabel('Normalized Counts')
     plt.hist(errors, bins=100, histtype='step', density=True, weights=weights)
-    imgname = gen_filename + str.split(quantity)[0] + '_error.png'
+    imgname = gen_filename + file_abbrev(quantity) + '_error.png'
     plt.savefig(imgname)
 
     plt.figure()
-    if str.split(quantity)[0] in ["dx","dy","dz"]:
-        plt.title('Error vs. True ' + str.split(quantity)[0])
-        plt.xlabel(str.split(quantity)[0] + ' Error / True ' + str.split(quantity)[0])
-    else:
-        plt.title('Error vs. True ' + str.capitalize(str.split(quantity)[0]))
-        plt.xlabel(str.capitalize(str.split(quantity)[0]) + ' Error / True ' + str.split(quantity)[1])
+    plt.title('Error vs. True ' + strip_units(quantity))
+    plt.xlabel(strip_units(quantity) + ' Error / True ' + strip_units(quantity))
     plt.ylabel('Normalized Counts')
     plt.hist(numpy.divide(errors,true), bins=30, range=(-3.0,3.0), histtype='step', density=True, weights=weights)
-    imgname = gen_filename + str.split(quantity)[0] + '_devetrue.png'
+    imgname = gen_filename + file_abbrev(quantity) + '_devetrue.png'
     plt.savefig(imgname)
 
     del sigma_overflow
@@ -139,9 +134,9 @@ def plot_loss(history, test, metric, variable, no_epochs, gen_filename='path/sav
         plt.plot(no_epochs-1, test[1], 'go', label=variable+' Uncertainty Test')
     plt.legend(loc="best")
     if variable == "Loss":
-        imgname = gen_filename+str.lower(variable)+'.png'
+        imgname = gen_filename+file_abbrev(variable)+'.png'
     else:
-        imgname = gen_filename+str.lower(variable)+'_loss.png'
+        imgname = gen_filename+file_abbrev(variable)+'_loss.png'
     plt.savefig(imgname)
 
 def find_contours_2D(x_values,y_values,xbins,weights=None,c1=16,c2=84):
@@ -195,18 +190,9 @@ def find_contours_2D(x_values,y_values,xbins,weights=None,c1=16,c2=84):
 
 def plot_2dhist_contours(true, predicted, xymin, xymax, quantity, weights, gen_filename='path/save_folder/'):
     plt.figure()
-    if quantity == 'cos(zenith) []':
-        plt.title('Predicted vs. True Cos(Zenith)')
-        plt.xlabel('True Cos(Zenith)')
-        plt.ylabel('Predicted Cos(Zenith)')
-    elif str.split(quantity)[0] in ["dx","dy","dz"]:
-        plt.title('Predicted vs. True ' + str.split(quantity)[0])
-        plt.xlabel('True ' + quantity)
-        plt.ylabel('Predicted ' + quantity)
-    else:
-        plt.title('Predicted vs. True ' + str.capitalize(str.split(quantity)[0]))
-        plt.xlabel('True ' + str.capitalize(str.split(quantity)[0]) + ' ' + str.split(quantity)[1])
-        plt.ylabel('Predicted ' + str.capitalize(str.split(quantity)[0]) + ' ' + str.split(quantity)[1])
+    plt.title('Predicted vs. True ' + strip_units(quantity))
+    plt.xlabel('True ' + quantity)
+    plt.ylabel('Predicted ' + quantity)
     cnts, xbins, ybins, img = plt.hist2d(true, predicted, weights=weights, bins=100, range=[[xymin,xymax],[xymin,xymax]], norm=matplotlib.colors.LogNorm())
     x, y_med, y_lower, y_upper = find_contours_2D(true, predicted, xbins, weights=weights)
     plt.plot(x, y_med, color='r', label='Median')
@@ -217,42 +203,29 @@ def plot_2dhist_contours(true, predicted, xymin, xymax, quantity, weights, gen_f
     bar = plt.colorbar()
     bar.set_label('Counts')
     plt.plot([xymin,xymax], [xymin,xymax], color='black', linestyle='dashed')
-    if quantity == 'cos(zenith) []':
-        imgname = gen_filename+'cosz_contours_2D.png'
-    else:
-        imgname = gen_filename+str.split(quantity)[0]+'_contours_2D.png'
+    imgname = gen_filename+file_abbrev(quantity)+'_contours_2D.png'
     plt.savefig(imgname)
 
 def plot_2dhist(true, predicted, xymin, xymax, quantity, weights, gen_filename='path/save_folder/'):
     plt.figure()
-    if str.split(quantity)[0] in ["dx","dy","dz"]:
-        plt.title('Predicted vs. True ' + str.split(quantity)[0])
-        plt.xlabel('True ' + quantity)
-        plt.ylabel('Predicted ' + quantity)
-    else:
-        plt.title('Predicted vs. True ' + str.capitalize(str.split(quantity)[0]))
-        plt.xlabel('True ' + str.capitalize(str.split(quantity)[0]) + ' ' + str.split(quantity)[1])
-        plt.ylabel('Predicted ' + str.capitalize(str.split(quantity)[0]) + ' ' + str.split(quantity)[1])
+    plt.title('Predicted vs. True ' + strip_units(quantity))
+    plt.xlabel('True ' + quantity)
+    plt.ylabel('Predicted ' + quantity)
     plt.hist2d(true, predicted, weights=weights, bins=100, range=[[xymin,xymax],[xymin,xymax]], norm=matplotlib.colors.LogNorm())
     bar = plt.colorbar()
     bar.set_label('Counts')
     plt.plot([xymin,xymax], [xymin,xymax], color='r')
-    imgname = gen_filename+str.split(quantity)[0]+'_2D.png'
+    imgname = gen_filename+file_abbrev(quantity)+'_2D.png'
     plt.savefig(imgname)
 
 def plot_1dhist(true, predicted, minimum, maximum, quantity, weights, gen_filename='path/save_folder/'):
     plt.figure()
-    if str.split(quantity)[0] in ["dx","dy","dz"]:
-        plt.title('Predicted vs. True ' + str.split(quantity)[0])
-        plt.xlabel(quantity)
-    else:
-        plt.title('Predicted vs. True ' + str.capitalize(str.split(quantity)[0]))
-        plt.xlabel(str.capitalize(str.split(quantity)[0]) + ' ' + str.split(quantity)[1])
-    plt.ylabel('Counts')
+    plt.title('Predicted vs. True ' + strip_units(quantity))
+    plt.xlabel(quantity)
     plt.hist(true, bins=100, range=[minimum,maximum], histtype='step', weights=weights, label='True')
     plt.hist(predicted, bins=100, range=[minimum,maximum], histtype='step', weights=weights, label='Predicted')
     plt.legend(loc="best")
-    imgname = gen_filename+str.split(quantity)[0]+'_1D.png'
+    imgname = gen_filename+file_abbrev(quantity)+'_1D.png'
     plt.savefig(imgname)
 
 def plot_inputs(pulse_time_data, pulse_charge_data, num_use, log_charge=False, gen_filename='/path/save_folder/'):
@@ -318,18 +291,11 @@ def plot_inputs(pulse_time_data, pulse_charge_data, num_use, log_charge=False, g
 
 def plot_outputs(true, minimum, maximum, quantity, weights, num_use, logscale=False, gen_filename='path/save_folder/'):
     plt.figure()
-    if str.split(quantity)[0] in ["dx","dy","dz"]:
-        if not num_use or num_use >= len(true):
-            plt.title('True ' + str.split(quantity)[0] + ', n=%i'%len(true))
-        else:
-            plt.title('True ' + str.split(quantity)[0] + ', n=%i'%num_use)
-        plt.xlabel(quantity)
+    if not num_use or num_use >= len(true):
+        plt.title('True ' + strip_units(quantity) + ', n=%i'%len(true))
     else:
-        if not num_use or num_use >= len(true):
-            plt.title('True ' + str.capitalize(str.split(quantity)[0]) + ', n=%i'%len(true))
-        else:
-            plt.title('True ' + str.capitalize(str.split(quantity)[0]) + ', n=%i'%num_use)
-        plt.xlabel(str.capitalize(str.split(quantity)[0]) + ' ' + str.split(quantity)[1])
+        plt.title('True ' + strip_units(quantity) + ', n=%i'%num_use)
+    plt.xlabel(quantity)
     plt.ylabel('Counts')
     if logscale == True:
         plt.yscale('log')
@@ -338,13 +304,13 @@ def plot_outputs(true, minimum, maximum, quantity, weights, num_use, logscale=Fa
     else:
         plt.hist(true[:num_use], bins=100, range=[minimum,maximum], histtype='stepfilled', weights=weights[:num_use])
     if (not num_use or num_use >= len(true)) and logscale == False:
-        imgname = gen_filename+'true_'+str.split(quantity)[0]+'_all.png'
+        imgname = gen_filename+'true_'+file_abbrev(quantity)+'_all.png'
     elif not num_use or num_use >= len(true):
-        imgname = gen_filename+'true_'+str.split(quantity)[0]+'_ylog_all.png'
+        imgname = gen_filename+'true_'+file_abbrev(quantity)+'_ylog_all.png'
     elif logscale == True:
-        imgname = gen_filename+'true_'+str.aplit(quantity)[0]+'_ylog_'+str(num_use)+'.png'
+        imgname = gen_filename+'true_'+file_abbrev(quantity)+'_ylog_'+str(num_use)+'.png'
     else:
-        imgname = gen_filename+'true_'+str.split(quantity)[0]+'_'+str(num_use)+'.png'
+        imgname = gen_filename+'true_'+file_abbrev(quantity)+'_'+str(num_use)+'.png'
     plt.savefig(imgname)
 
 def plot_outputs_classify(true1, true2, true3, minimum, maximum, quantity1, quantity2, quantity3, labels, num_use, logscale=False, gen_filename='path/save_folder/'):
@@ -376,7 +342,7 @@ def plot_outputs_classify(true1, true2, true3, minimum, maximum, quantity1, quan
         plt.title('True ' + labels[0] + '/' + labels[1] + ', n=%i'%len(true3))
     else:
         plt.title('True ' + labels[0] + '/' + labels[1] + ', n=%i'%num_use)
-    plt.xlabel(str.capitalize(str.split(quantity3)[0]) + ' ' + str.split(quantity3)[1])
+    plt.xlabel(quantity3)
     plt.ylabel('Counts')
     if logscale == True:
         plt.yscale('log')
@@ -384,13 +350,13 @@ def plot_outputs_classify(true1, true2, true3, minimum, maximum, quantity1, quan
     plt.hist(var2, bins=100, range=[minimum,maximum], histtype='stepfilled', alpha=0.5, label=labels[1])
     plt.legend(loc="best")
     if (not num_use or num_use >= len(true3)) and logscale == False:
-        imgname = gen_filename+'true_'+quantity1+quantity2+'_'+str.split(quantity3)[0]+'_all.png'
+        imgname = gen_filename+'true_'+quantity1+quantity2+'_'+file_abbrev(quantity3)+'_all.png'
     elif not num_use or num_use >= len(true3):
-        imgname = gen_filename+'true_'+quantity1+quantity2+'_'+str.split(quantity3)[0]+'_ylog_all.png'
+        imgname = gen_filename+'true_'+quantity1+quantity2+'_'+file_abbrev(quantity3)+'_ylog_all.png'
     elif logscale == True:
-        imgname = gen_filename+'true_'+quantity1+quantity2+'_'+str.split(quantity3)[0]+'_ylog_'+str(num_use)+'.png'
+        imgname = gen_filename+'true_'+quantity1+quantity2+'_'+file_abbrev(quantity3)+'_ylog_'+str(num_use)+'.png'
     else:
-        imgname = gen_filename+'true_'+quantity1+quantity2+'_'+str.split(quantity3)[0]+'_'+str(num_use)+'.png'
+        imgname = gen_filename+'true_'+quantity1+quantity2+'_'+file_abbrev(quantity3)+'_'+str(num_use)+'.png'
     plt.savefig(imgname)
 
 def plot_hit_info(pulse_charge, pmt_index, true_energies, num_use, logscale=False, gen_filename='path/save_folder/'):
@@ -581,9 +547,9 @@ def plot_error(true, predicted, minimum, maximum, quantity, quantity2=0, x=0, ge
 
     fractional_errors = predicted-true
 
-    if 'energy' in quantity:
+    if quantity == "Energy [GeV]":
         fractional_errors = ((predicted-true)/true)*100. # in percent
-    elif 'azimuth' in quantity:
+    elif 'Azimuth' in quantity:
         fractional_errors = numpy.array([(predicted[i]-true[i]) if math.fabs((predicted[i]-true[i])) < 180 else ((predicted[i]-true[i]-360) if predicted[i] > true[i] else (predicted[i]-true[i]+360)) for i in range(len(true))])
     else:
         fractional_errors = predicted-true
@@ -617,26 +583,14 @@ def plot_error(true, predicted, minimum, maximum, quantity, quantity2=0, x=0, ge
     plt.plot([minimum,maximum], [0,0], color='k')
     plt.xlim(minimum,maximum)
 
-    if str.split(quantity)[0] in ["dx","dy","dz"] and str.split(quantity2)[0] in ["dx","dy","dz"]: # dx/dy/dz to dx/dy/dz
-        plt.title(str.split(quantity)[0] + ' Error vs. ' + str.split(quantity2)[0])
-        plt.xlabel(quantity2)
-    elif str.split(quantity)[0] in ["dx","dy","dz"]: # dx/dy/dz to other
-        plt.title(str.split(quantity)[0] + ' Error vs. ' + str.capitalize(str.split(quantity2)[0]))
-        plt.xlabel(str.capitalize(str.split(quantity2)[0]) + ' ' + str.split(quantity2)[1])
-    elif str.split(quantity2)[0] in ["dx","dy","dz"]: # other to dx/dy/dz
-        plt.title(str.capitalize(str.split(quantity)[0]) + ' Error vs. ' + str.split(quantity2)[0])
-        plt.xlabel(quantity2)
-    else: # other to other
-        plt.title(str.capitalize(str.split(quantity)[0]) + ' Error vs. ' + str.capitalize(str.split(quantity2)[0]))
-        plt.xlabel(str.capitalize(str.split(quantity2)[0]) + ' ' + str.split(quantity2)[1])
+    plt.title(strip_units(quantity) + ' Error vs. ' + strip_units(quantity2))
+    plt.xlabel(quantity2)
 
-    if str.split(quantity)[0] in ["dx","dy","dz"]:
-        plt.ylabel(str.split(quantity)[0] + ' Error ' + str.split(quantity)[1])
-    elif 'energy' in quantity:
-        plt.ylabel(str.capitalize(str.split(quantity)[0]) + ' Percent Error')
-    else:
-        plt.ylabel(str.capitalize(str.split(quantity)[0]) + ' Error ' + str.split(quantity)[1])
-    imgname = gen_filename+str.split(quantity)[0]+'_'+str.split(quantity2)[0]+'_err.png'
+    if quantity == "Energy [GeV]":
+        plt.ylabel("Energy Percent Error")
+    else :
+        plt.ylabel(strip_units(quantity) + ' Error ' + get_units(quantity))
+    imgname = gen_filename+file_abbrev(quantity)+'_'+file_abbrev(quantity2)+'_err.png'
     plt.savefig(imgname)
 
 def plot_error_contours(true, predicted, minimum, maximum, quantity, quantity2=0, x=0, gen_filename='path/save_folder/'):
@@ -646,15 +600,15 @@ def plot_error_contours(true, predicted, minimum, maximum, quantity, quantity2=0
 
     fractional_errors = predicted-true
 
-    if 'energy' in quantity:
+    if quantity == "Energy [GeV]":
         fractional_errors = ((predicted-true)/true)*100. # in percent
-    elif 'azimuth' in quantity and 'cos' not in quantity:
+    elif 'Azimuth' in quantity:
         fractional_errors = numpy.array([(predicted[i]-true[i]) if math.fabs((predicted[i]-true[i])) < 180 else ((predicted[i]-true[i]-360) if predicted[i] > true[i] else (predicted[i]-true[i]+360)) for i in range(len(true))])
     else:
         fractional_errors = predicted-true
 
     plt.figure()
-    if 'energy' in quantity:
+    if quantity == "Energy [GeV]":
         cnts, xbins, ybins, img = plt.hist2d(x, fractional_errors, bins=100, range=[[minimum,maximum],[-100,100]], norm=matplotlib.colors.LogNorm()) # -100 to 100 percent y-axis
     else:
         cnts, xbins, ybins, img = plt.hist2d(x, fractional_errors, bins=100, range=[[minimum,maximum],[-1*max(true),max(true)]], norm=matplotlib.colors.LogNorm())
@@ -668,43 +622,15 @@ def plot_error_contours(true, predicted, minimum, maximum, quantity, quantity2=0
     bar = plt.colorbar()
     bar.set_label('Counts')
 
-    if quantity == 'cos(zenith) []' and quantity2 == 'cos(zenith) []': # cosz to cosz
-        plt.title('Cos(Zenith) Error vs. Cos(Zenith)')
-        plt.xlabel('Cos(Zenith)')
-    elif quantity == 'cos(zenith) []' and str.split(quantity2)[0] in ["dx","dy","dz"]: # cosz to dx/dy/dz
-        plt.title('Cos(Zenith) Error vs. ' + str.split(quantity2)[0])
-        plt.xlabel(quantity2)
-    elif quantity == 'cos(zenith) []': # cosz to other
-        plt.title('Cos(Zenith) Error vs. ' + str.capitalize(str.split(quantity2)[0]))
-        plt.xlabel(str.capitalize(str.split(quantity2)[0]))
-    elif str.split(quantity)[0] in ["dx","dy","dz"] and str.split(quantity2)[0] in ["dx","dy","dz"]: # dx/dy/dz to dx/dy/dz
-        plt.title(str.split(quantity)[0] + ' Error vs. ' + str.split(quantity2)[0])
-        plt.xlabel(quantity2)
-    elif str.split(quantity)[0] in ["dx","dy","dz"]: # dx/dy/dz to other
-        plt.title(str.split(quantity)[0] + ' Error vs. ' + str.capitalize(str.split(quantity2)[0]))
-        plt.xlabel(str.capitalize(str.split(quantity2)[0]) + ' ' + str.split(quantity2)[1])
-    elif str.split(quantity2)[0] in ["dx","dy","dz"]: # other to dx/dy/dz
-        plt.title(str.capitalize(str.split(quantity)[0]) + ' Error vs. ' + str.split(quantity2)[0])
-        plt.xlabel(quantity2)
-    else: # other to other
-        plt.title(str.capitalize(str.split(quantity)[0]) + ' Error vs. ' + str.capitalize(str.split(quantity2)[0]))
-        plt.xlabel(str.capitalize(str.split(quantity2)[0]) + ' ' + str.split(quantity2)[1])
+    plt.title(strip_units(quantity) + ' Error vs. ' + strip_units(quantity2))
+    plt.xlabel(quantity2)
 
-    if quantity == 'cos(zenith) []':
-        plt.ylabel('Cos(Zenith) Error')
-    elif str.split(quantity)[0] in ["dx","dy","dz"]:
-        plt.ylabel(str.split(quantity)[0] + ' Error ' + str.split(quantity)[1])
-    elif 'energy' in quantity:
-        plt.ylabel(str.capitalize(str.split(quantity)[0]) + ' Percent Error')
+    if quantity == "Energy [GeV]":
+        plt.ylabel("Energy Percent Error")
     else:
-        plt.ylabel(str.capitalize(str.split(quantity)[0]) + ' Error ' + str.split(quantity)[1])
+        plt.ylabel(strip_units(quantity) + ' Error ' + get_units(quantity))
 
-    if quantity == 'cos(zenith) []' and quantity2 == 'cos(zenith) []':
-        imgname = gen_filename+'cosz_cosz_err_contours.png'
-    elif quantity == 'cos(zenith) []':
-        imgname = gen_filename+'cosz_'+str.split(quantity2)[0]+'_err_contours.png'
-    else:
-        imgname = gen_filename+str.split(quantity)[0]+'_'+str.split(quantity2)[0]+'_err_contours.png'
+    imgname = gen_filename+file_abbrev(quantity)+'_'+file_abbrev(quantity)+'_err_contours.png'
     plt.savefig(imgname)
 
 def plot_error_vs_reco(true, predicted, reco, minimum, maximum, quantity, quantity2=0, x=0, gen_filename='path/save_folder/'):
@@ -720,10 +646,10 @@ def plot_error_vs_reco(true, predicted, reco, minimum, maximum, quantity, quanti
     true_reco = numpy.copy(true)
     reco = numpy.copy(reco[reco > 1e-3])
 
-    if 'energy' in quantity:
+    if quantity == 'Energy [GeV]' in quantity:
         fractional_errors = ((predicted-true)/true)*100. # in percent
         fractional_errors_reco = ((reco-true_reco)/true_reco)*100.
-    elif 'azimuth' in quantity:
+    elif 'Azimuth' in quantity:
         fractional_errors = numpy.array([(predicted[i]-true[i]) if math.fabs((predicted[i]-true[i])) < 180 else ((predicted[i]-true[i]-360) if predicted[i] > true[i] else (predicted[i]-true[i]+360)) for i in range(len(true))])
         fractional_errors_reco = numpy.array([(reco[i]-true_reco[i]) if math.fabs((reco[i]-true_reco[i])) < 180 else ((reco[i]-true_reco[i]-360) if reco[i] > true_reco[i] else (reco[i]-true_reco[i]+360)) for i in range(len(true_reco))])
     else:
@@ -769,24 +695,13 @@ def plot_error_vs_reco(true, predicted, reco, minimum, maximum, quantity, quanti
     plt.errorbar(centers, medians_reco, yerr=[medians_reco-err_from_reco, err_to_reco-medians_reco], xerr=[centers-ranges[:-1], ranges[1:]-centers], fmt='o', label='PegLeg', capsize=5)
     plt.plot([minimum,maximum], [0,0], color='k')
     plt.xlim(minimum,maximum)
-    if str.split(quantity)[0] in ["dx","dy","dz"] and str.split(quantity2)[0] in ["dx","dy","dz"]:
-        plt.title(str.split(quantity)[0] + ' Error vs. ' + str.split(quantity2)[0])
-        plt.xlabel(quantity2)
-    elif str.split(quantity)[0] in ["dx","dy","dz"]:
-        plt.title(str.split(quantity)[0] + ' Error vs. ' + str.capitalize(str.split(quantity2)[0]))
-        plt.xlabel(str.capitalize(str.split(quantity2)[0]) + ' ' + str.split(quantity2)[1])
-    elif str.split(quantity2)[0] in ["dx","dy","dz"]:
-        plt.title(str.capitalize(str.split(quantity)[0]) + ' Error vs. ' + str.split(quantity2)[0])
-        plt.xlabel(quantity2)
+
+    plt.title(strip_units(quantity) + ' Error vs. ' + strip_units(quantity2))
+    plt.xlabel(quantity2)
+    if quantity == "Energy [GeV]":
+        plt.ylabel("Energy Percent Error")
     else:
-        plt.title(str.capitalize(str.split(quantity)[0]) + ' Error vs. ' + str.capitalize(str.split(quantity2)[0]))
-        plt.xlabel(str.capitalize(str.split(quantity2)[0]) + ' ' + str.split(quantity2)[1])
-    if str.split(quantity)[0] in ["dx","dy","dz"]:
-        plt.ylabel(str.split(quantity)[0] + ' Error ' + str.split(quantity)[1])
-    elif 'energy' in quantity:
-        plt.ylabel(str.capitalize(str.split(quantity)[0]) + ' Percent Error')
-    else:
-        plt.ylabel(str.capitalize(str.split(quantity)[0]) + ' Error ' + str.split(quantity)[1])
+        plt.ylabel(strip_units(quantity) + ' Error ' + get_units(quantity))
     plt.legend(loc="best")
-    imgname = gen_filename+str.split(quantity)[0]+'_'+str.split(quantity2)[0]+'_err_comp.png'
+    imgname = gen_filename+fle_abbrev(quantity)+'_'+file_abbrev(quantity2)+'_err_comp.png'
     plt.savefig(imgname)
