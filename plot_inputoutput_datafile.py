@@ -195,14 +195,14 @@ def main(config=1):
     print("Plotting regression output distributions")
     t_regression_start = time.time()
     if use_log_energy:
-        plot_outputs(numpy.log10(energy_true), min(numpy.log10(energy_true)), max(numpy.log10(energy_true)), 'energy [log10(E/GeV)]', weights, num_use=num_use, logscale=False, gen_filename=save_folder_name)
+        plot_outputs(numpy.log10(energy_true), min(numpy.log10(energy_true)), max(numpy.log10(energy_true)), 'Energy [log10(E/GeV)]', weights, num_use=num_use, logscale=False, gen_filename=save_folder_name)
     else:
-        plot_outputs(energy_true, min(energy_true), max(energy_true), 'energy [GeV]', weights, num_use=num_use, logscale=False, gen_filename=save_folder_name)
+        plot_outputs(energy_true, min(energy_true), max(energy_true), 'Energy [GeV]', weights, num_use=num_use, logscale=False, gen_filename=save_folder_name)
     plot_outputs(dx_true, -1.0, 1.0, 'dx [m]', weights, num_use=num_use, logscale=False, gen_filename=save_folder_name)
     plot_outputs(dy_true, -1.0, 1.0, 'dy [m]', weights, num_use=num_use, logscale=False, gen_filename=save_folder_name)
     plot_outputs(dz_true, -1.0, 1.0, 'dz [m]', weights, num_use=num_use, logscale=False, gen_filename=save_folder_name)
-    plot_outputs(azimuth_true*180/numpy.pi, 0, 360, 'azimuth [degrees]', weights, num_use=num_use, logscale=False, gen_filename=save_folder_name)
-    plot_outputs(zenith_true*180/numpy.pi, 0, 180, 'zenith [degrees]', weights, num_use=num_use, logscale=False, gen_filename=save_folder_name)
+    plot_outputs(azimuth_true*180/numpy.pi, 0, 360, 'Azimuth [degrees]', weights, num_use=num_use, logscale=False, gen_filename=save_folder_name)
+    plot_outputs(zenith_true*180/numpy.pi, 0, 180, 'Zenith [degrees]', weights, num_use=num_use, logscale=False, gen_filename=save_folder_name)
     t_regression_end = time.time()
     if (t_regression_end-t_regression_start)/60. > 1:
         print((t_regression_end-t_regression_start)/60., "minutes to plot regression outputs")
@@ -211,8 +211,8 @@ def main(config=1):
 
     print("Plotting classification output distributions")
     t_classification_start = time.time()
-    plot_outputs_classify(track_true, cascade_true, energy_true, min(energy_true), max(energy_true), 'track', 'cascade', 'energy [GeV]', ['Track','Cascade'], num_use=num_use, logscale=False, gen_filename=save_folder_name)
-    plot_outputs_classify(CC_true, NC_true, energy_true, min(energy_true), max(energy_true), 'CC', 'NC', 'energy [GeV]', ['CC','NC'], num_use=num_use, logscale=False, gen_filename=save_folder_name)
+    plot_outputs_classify(track_true, cascade_true, energy_true, min(energy_true), max(energy_true), 'track', 'cascade', 'Energy [GeV]', ['Track','Cascade'], num_use=num_use, logscale=False, gen_filename=save_folder_name)
+    plot_outputs_classify(CC_true, NC_true, energy_true, min(energy_true), max(energy_true), 'CC', 'NC', 'Energy [GeV]', ['CC','NC'], num_use=num_use, logscale=False, gen_filename=save_folder_name)
     t_classification_end = time.time()
     if (t_clasification_end-t_classification_start)/60. > 1:
         print((t_classification_end-t_classification_start)/60., "minutes to plot classification outputs")
