@@ -39,7 +39,7 @@ def plot_uncertainty(true, predicted, sigma, quantity, weights, gen_filename="pa
 
     errors = predicted-true
 
-    if quantity == "Azimuth [deg]":
+    if quantity == "Azimuth [degrees]":
         errors = numpy.array([errors[i] if (errors[i] < 180) else (360-errors[i]) for i in range(len(errors))])
         errors = numpy.array([errors[i] if (errors[i] > -180) else (360+errors[i]) for i in range(len(errors))])
     
@@ -60,7 +60,7 @@ def plot_uncertainty(true, predicted, sigma, quantity, weights, gen_filename="pa
         sigma_cutoff = math.ceil(float(numpy.max(true))/100)*100 # Rounds up to nearest hundred GeV
     elif quantity == "Zenith [deg]":
         sigma_cutoff = 180 # degrees
-    elif quantity == "Azimuth [deg]":
+    elif quantity == "Azimuth [degrees]":
         sigma_cutoff = 360 # degrees
     else:
         sigma_cutoff = numpy.inf
@@ -555,7 +555,7 @@ def plot_error(true, predicted, minimum, maximum, quantity, quantity2=0, x=0, ge
 
     if quantity == "Energy [GeV]":
         fractional_errors = ((predicted-true)/true)*100. # in percent
-    elif quantity == "Azimuth [deg]":
+    elif quantity == "Azimuth [degrees]":
         fractional_errors = numpy.array([(predicted[i]-true[i]) if math.fabs((predicted[i]-true[i])) < 180 else ((predicted[i]-true[i]-360) if predicted[i] > true[i] else (predicted[i]-true[i]+360)) for i in range(len(true))])
     else:
         fractional_errors = predicted-true
@@ -608,7 +608,7 @@ def plot_error_contours(true, predicted, minimum, maximum, quantity, quantity2=0
 
     if quantity == "Energy [GeV]":
         fractional_errors = ((predicted-true)/true)*100. # in percent
-    elif quantity == "Azimuth [deg]":
+    elif quantity == "Azimuth [degrees]":
         fractional_errors = numpy.array([(predicted[i]-true[i]) if math.fabs((predicted[i]-true[i])) < 180 else ((predicted[i]-true[i]-360) if predicted[i] > true[i] else (predicted[i]-true[i]+360)) for i in range(len(true))])
     else:
         fractional_errors = predicted-true
@@ -655,7 +655,7 @@ def plot_error_vs_reco(true, predicted, reco, minimum, maximum, quantity, quanti
     if quantity == "Energy [GeV]":
         fractional_errors = ((predicted-true)/true)*100. # in percent
         fractional_errors_reco = ((reco-true_reco)/true_reco)*100.
-    elif quantity == "Azimuth [deg]":
+    elif quantity == "Azimuth [degrees]":
         fractional_errors = numpy.array([(predicted[i]-true[i]) if math.fabs((predicted[i]-true[i])) < 180 else ((predicted[i]-true[i]-360) if predicted[i] > true[i] else (predicted[i]-true[i]+360)) for i in range(len(true))])
         fractional_errors_reco = numpy.array([(reco[i]-true_reco[i]) if math.fabs((reco[i]-true_reco[i])) < 180 else ((reco[i]-true_reco[i]-360) if reco[i] > true_reco[i] else (reco[i]-true_reco[i]+360)) for i in range(len(true_reco))])
     else:
