@@ -7,6 +7,25 @@ import numpy as np
 import scipy
 import itertools
 
+def strip_units(name_with_units):
+    # Assumes format of "base_variable [units]" or "base_variable []" (unitless)
+    return name_with_units[:name_with_units.find('[')-1]
+
+def file_abbrev(name_with_units):
+    abbrev = ""
+    no_units = strip_units(name_with_units)
+    print(no_units)
+    if "Cos(Zenith)" in name_with_units: # special abbrev for cosz
+        abbrev += "cosz"
+    elif "Uncertainty" in name_with_units: # uncertainty --> base + unc
+        base_var = no_units[:no_units.find("Uncertainty")-1]
+        abbrev += str.lower(base_var) + "unc"
+    else: # just lowercase
+        abbrev += str.lower(no_units)
+    abbrev = abbrev.replace(' ','') # remove any spaces ("track length --> tracklength")
+    
+    return abbrev
+
 def plot_uncertainty(true, predicted, sigma, quantity, weights, gen_filename='path/save_folder/'):
 
     errors = predicted-true
