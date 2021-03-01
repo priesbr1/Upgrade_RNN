@@ -35,6 +35,56 @@ def file_abbrev(variable):
 
     return abbrev
 
+def find_contours_2D(x_values,y_values,xbins,weights=None,c1=16,c2=84):
+    """
+    --From Jessie Micallef--
+    Find upper and lower contours and median
+    x_values = array, input for hist2d for x axis (typically truth)
+    y_values = array, input for hist2d for y axis (typically reconstruction)
+    xbins = values for the starting edge of the x bins (output from hist2d)
+    c1 = percentage for lower contour bound (16% - 84% means a 68% band, so c1 = 16)
+    c2 = percentage for upper contour bound (16% - 84% means a 68% band, so c2 = 84)
+    Returns:
+        x = values for xbins, repeated for plotting (i.e. [0,0,1,1,2,2,...]
+        y_median = values for y value medians per bin, repeated for plotting (i.e. [40,40,20,20,50,50,...]
+        y_lower = values for y value lower limits per bin, repeated for plotting (i.e. [30,30,10,10,20,20,...]
+        y_upper = values for y value upper limits per bin, repeated for plotting (i.e. [50,50,40,40,60,60,...]
+    """
+    if weights is not None:
+        import wquantiles as wq
+    y_values = numpy.array(y_values)
+    indices = numpy.digitize(x_values,xbins)
+    r1_save = []
+    r2_save = []
+    median_save = []
+    for i in range(1,len(xbins)):
+        mask = indices==i
+        if len(y_values[mask])>0:
+            if weights is None:
+                r1, m, r2 = numpy.percentile(y_values[mask],[c1,50,c2])
+            else:
+                r1 = wq.quantile(y_values[mask],weights[mask],c1/100.)
+                r2 = wq.quantile(y_values[mask],weights[mask],c2/100.)
+                m = wq.median(y_values[mask],weights[mask])
+        else:
+            print(i,"empty bin")
+            r1 = 0
+            m = 0
+            r2 = 0
+        median_save.append(m)
+        r1_save.append(r1)
+        r2_save.append(r2)
+    median = numpy.array(median_save)
+    lower = numpy.array(r1_save)
+    upper = numpy.array(r2_save)
+
+    x = list(itertools.chain(*zip(xbins[:-1],xbins[1:])))
+    y_median = list(itertools.chain(*zip(median,median)))
+    y_lower = list(itertools.chain(*zip(lower,lower)))
+    y_upper = list(itertools.chain(*zip(upper,upper)))
+
+    return x, y_median, y_lower, y_upper
+
 def plot_uncertainty(true, predicted, sigma, quantity, weights, gen_filename="path/save_folder/"):
 
     errors = predicted-true
@@ -113,6 +163,94 @@ def plot_uncertainty(true, predicted, sigma, quantity, weights, gen_filename="pa
 
     del sigma_overflow
 
+def plot_uncertainty_2d(true, predicted, sigma, quantity, weights, gen_filename="path/save_folder/"):
+
+   errors = predicted-true
+
+    if quantity == "Azimuth [degrees]":
+        errors = numpy.array([errors[i] if (errors[i] < 180) else (360-errors[i]) for i in range(len(errors))])
+        errors = numpy.array([errors[i] if (errors[i] > -180) else (360+errors[i]) for i in range(len(errors))])
+
+    plt.figure()
+    plt.title("True " + strip_units(quantity) + " Uncertainty vs. True " + strip_units(quantity))
+    plt.xlabel("True " + quantity)
+    plt.ylabel("True " + strip_units(quantity) + " Uncertainty " + get_units(quantity))
+    cnts, xbins, ybins, img = plt.hist2d(true, errors, weights=weights, bins=100, range=[[min(true),max(true)],[min(errors),max(errors)]], norm=matplotlib.colors.LogNorm())
+    x, y_med, y_lower, y_upper = find_contours_2D(true, errors, xbins, weights=weights)
+    plt.plot(x, y_med, color='r', label="Median")
+    plt.plot(x, y_lower, color='r', linestyle="dashed", label="68% band")
+    plt.plot(x, y_upper, color='r', linestyle="dashed")
+    plt.legend(loc="best")
+    plt.grid()
+    bar = plt.colorbar()
+    bar.set_label("Counts")
+    plt.plot([min(true),max(true)], [min(errors),max(errors)], color="black", linestyle="dashed")
+    imgname = gen_filename + "true_" + file_abbrev(quantity) + "unc_2d.png"
+    plt.savefig(imgname)
+
+    # Set uncertainty cutoff to be maximum of range for energy, zenith, azimuth
+    if quantity == "Energy [GeV]":
+        sigma_cutoff = math.ceil(float(numpy.max(true))/100)*100 # Rounds up to nearest hundred GeV
+    elif quantity == "Zenith [deg]":
+        sigma_cutoff = 180 # degrees
+    elif quantity == "Azimuth [degrees]":
+        sigma_cutoff = 360 # degrees
+    else:
+        sigma_cutoff = numpy.inf
+
+    if np.max(sigma) >= sigma_cutoff:
+        non_inf = sigma <= sigma_cutoff
+        sigma_bounded = sigma[non_inf]
+        sigma_overflow = len(sigma)-len(sigma_bounded)
+        if sigma_overflow == 1:
+            print(sigma_overflow, " large uncertainty for ", strip_units(quantity))
+        else:
+            print(sigma_overflow, " large uncertainties for ", strip_units(quantity))
+        if len(sigma_bounded) > 0:
+            print("New maximum uncertainty:", np.max(sigma_bounded))
+            abort_sigma_plot = False
+        else:
+            print("Aborting sigma histogram -- no small uncertainties for ", strip_units(quantity))
+            abort_sigma_plot = True
+    else:
+        sigma_overflow = None
+        abort_sigma_plot = False
+
+    if abort_sigma_plot == False:
+        plt.figure()
+        plt.title("Predicted " + strip_units(quantity) + " Uncertainty vs. True " + strip_units(quantity))
+        plt.xlabel("True " + quantity)
+        plt.ylabel("Predicted " + strip_units(quantity) + " Uncertainty " + get_units(quantity))
+        cnts, xbins, ybins, img = plt.hist2d(true, errors, weights=weights, bins=100, range=[[min(true),max(true)],[min(sigma_bounded),max(sigma_bounded)]], norm=matplotlib.colors.LogNorm())
+        x, y_med, y_lower, y_upper = find_contours_2D(true, sigma_bounded, xbins, weights=weights)
+        plt.plot(x, y_med, color='r', label="Median")
+        plt.plot(x, y_lower, color='r', linestyle="dashed", label="68% band")
+        plt.plot(x, y_upper, color='r', linestyle="dashed")
+        plt.legend(loc="best")
+        plt.grid()
+        bar = plt.colorbar()
+        bar.set_label("Counts")
+        plt.plot([min(true),max(true)], [min(sigma_bounded),max(sigma_bounded)], color="black", linestyle="dashed")
+        imgname = gen_filename + "pred_" + file_abbrev(quantity) + "unc_2d.png"
+        plt.savefig(imgname)
+
+        plt.figure()
+        plt.title("Predicted " + strip_units(quantity) + " Uncertainty vs. True " + strip_units(quantity) + "Uncertainty")
+        plt.xlabel("True " + strip_units(quantity) + " Uncertainty " + get_units(quantity))
+        plt.ylabel("Predicted " + strip_units(quantity) + " Uncertainty " + get_units(quantity))
+        cnts, xbins, ybins, img = plt.hist2d(errors, sigma_bounded, weights=weights, bins=100, range=[[min(errors),max(errors)],[min(sigma_bounded),max(sigma_bounded)]], norm=matplotlib.colors.LogNorm())
+        x, y_med, y_lower, y_upper = find_contours_2D(errors, sigma_bounded, xbins, weights=weights)
+        plt.plot(x, y_med, color='r', label="Median")
+        plt.plot(x, y_lower, color='r', linestyle="dashed", label="68% band")
+        plt.plot(x, y_upper, color='r', linestyle="dashed")
+        plt.legend(loc="best")
+        plt.grid()
+        bar = plt.colorbar()
+        bar.set_label("Counts")
+        plt.plot([min(errors),max(errors)], [min(sigma_bounded),max(sigma_bounded)], color="black", linestyle="dashed")
+        imgname = gen_filename +  file_abbrev(quantity) + "_unc_2d.png"
+        plt.savefig(imgname)
+
 def plot_loss(history, test, metric, variable, no_epochs, gen_filename="path/save_folder/", unc=False):
     plt.figure()
     if unc == False:
@@ -138,55 +276,6 @@ def plot_loss(history, test, metric, variable, no_epochs, gen_filename="path/sav
     else:
         imgname = gen_filename + file_abbrev(variable) + "_loss.png"
     plt.savefig(imgname)
-
-def find_contours_2D(x_values,y_values,xbins,weights=None,c1=16,c2=84):
-    """
-    Find upper and lower contours and median
-    x_values = array, input for hist2d for x axis (typically truth)
-    y_values = array, input for hist2d for y axis (typically reconstruction)
-    xbins = values for the starting edge of the x bins (output from hist2d)
-    c1 = percentage for lower contour bound (16% - 84% means a 68% band, so c1 = 16)
-    c2 = percentage for upper contour bound (16% - 84% means a 68% band, so c2 = 84)
-    Returns:
-        x = values for xbins, repeated for plotting (i.e. [0,0,1,1,2,2,...]
-        y_median = values for y value medians per bin, repeated for plotting (i.e. [40,40,20,20,50,50,...]
-        y_lower = values for y value lower limits per bin, repeated for plotting (i.e. [30,30,10,10,20,20,...]
-        y_upper = values for y value upper limits per bin, repeated for plotting (i.e. [50,50,40,40,60,60,...]
-    """
-    if weights is not None:
-        import wquantiles as wq
-    y_values = numpy.array(y_values)
-    indices = numpy.digitize(x_values,xbins)
-    r1_save = []
-    r2_save = []
-    median_save = []
-    for i in range(1,len(xbins)):
-        mask = indices==i
-        if len(y_values[mask])>0:
-            if weights is None:
-                r1, m, r2 = numpy.percentile(y_values[mask],[c1,50,c2])
-            else:
-                r1 = wq.quantile(y_values[mask],weights[mask],c1/100.)
-                r2 = wq.quantile(y_values[mask],weights[mask],c2/100.)
-                m = wq.median(y_values[mask],weights[mask])
-        else:
-            print(i,"empty bin")
-            r1 = 0
-            m = 0
-            r2 = 0
-        median_save.append(m)
-        r1_save.append(r1)
-        r2_save.append(r2)
-    median = numpy.array(median_save)
-    lower = numpy.array(r1_save)
-    upper = numpy.array(r2_save)
-
-    x = list(itertools.chain(*zip(xbins[:-1],xbins[1:])))
-    y_median = list(itertools.chain(*zip(median,median)))
-    y_lower = list(itertools.chain(*zip(lower,lower)))
-    y_upper = list(itertools.chain(*zip(upper,upper)))
-
-    return x, y_median, y_lower, y_upper
 
 def plot_2dhist_contours(true, predicted, xymin, xymax, quantity, weights, gen_filename="path/save_folder/"):
     plt.figure()
