@@ -35,6 +35,38 @@ def file_abbrev(variable):
 
     return abbrev
 
+def bound_uncertainties(true, sigma, quantity):
+    # Set uncertainty cutoff to be maximum of range for energy, zenith, azimuth
+    if quantity == "Energy [GeV]":
+        sigma_cutoff = math.ceil(float(numpy.max(true))/100)*100 # Rounds up to nearest hundred GeV
+    elif quantity == "Zenith [deg]":
+        sigma_cutoff = 180 # degrees
+    elif quantity == "Azimuth [degrees]":
+        sigma_cutoff = 360 # degrees
+    else:
+        sigma_cutoff = numpy.inf
+
+    if np.max(sigma) >= sigma_cutoff:
+        non_inf = sigma <= sigma_cutoff
+        sigma_bounded = sigma[non_inf]
+        sigma_overflow = len(sigma)-len(sigma_bounded)
+        if sigma_overflow == 1:
+            print(sigma_overflow, " large uncertainty for ", strip_units(quantity))
+        else:
+            print(sigma_overflow, " large uncertainties for ", strip_units(quantity))
+        if len(sigma_bounded) > 0:
+            print("New maximum uncertainty:", np.max(sigma_bounded))
+            abort_sigma_plot = False
+        else:
+            print("Aborting sigma histogram -- no small uncertainties for ", strip_units(quantity))
+            abort_sigma_plot = True
+    else:
+        sigma_bounded = np.copy(sigma)
+        sigma_overflow = None
+        abort_sigma_plot = False
+
+    return sigma_bounded, sigma_overflow, non_inf, abort_sigma_plot
+
 def find_contours_2D(x_values,y_values,xbins,weights=None,c1=16,c2=84):
     """
     --From Jessie Micallef--
@@ -105,33 +137,7 @@ def plot_uncertainty(true, predicted, sigma, quantity, weights, gen_filename="pa
     imgname = gen_filename + file_abbrev(quantity) + "_pull.png"
     plt.savefig(imgname)
 
-    # Set uncertainty cutoff to be maximum of range for energy, zenith, azimuth
-    if quantity == "Energy [GeV]":
-        sigma_cutoff = math.ceil(float(numpy.max(true))/100)*100 # Rounds up to nearest hundred GeV
-    elif quantity == "Zenith [deg]":
-        sigma_cutoff = 180 # degrees
-    elif quantity == "Azimuth [degrees]":
-        sigma_cutoff = 360 # degrees
-    else:
-        sigma_cutoff = numpy.inf
-
-    if np.max(sigma) >= sigma_cutoff:
-        non_inf = sigma <= sigma_cutoff
-        sigma_bounded = sigma[non_inf]
-        sigma_overflow = len(sigma)-len(sigma_bounded)
-        if sigma_overflow == 1:
-            print(sigma_overflow, " large uncertainty for ", strip_units(quantity))
-        else:
-            print(sigma_overflow, " large uncertainties for ", strip_units(quantity))
-        if len(sigma_bounded) > 0:
-            print("New maximum uncertainty:", np.max(sigma_bounded))
-            abort_sigma_plot = False
-        else:
-            print("Aborting sigma histogram -- no small uncertainties for ", strip_units(quantity))
-            abort_sigma_plot = True
-    else:
-        sigma_overflow = None
-        abort_sigma_plot = False
+    sigma_bounded, sigma_overflow, non_inf, abort_sigma_plot = bound_uncertainties(true, sigma, quantity)
 
     if abort_sigma_plot == False:
         plt.figure()
@@ -188,41 +194,19 @@ def plot_uncertainty_2d(true, predicted, sigma, quantity, weights, gen_filename=
     imgname = gen_filename + "true_" + file_abbrev(quantity) + "unc_2D.png"
     plt.savefig(imgname)
 
-    # Set uncertainty cutoff to be maximum of range for energy, zenith, azimuth
-    if quantity == "Energy [GeV]":
-        sigma_cutoff = math.ceil(float(numpy.max(true))/100)*100 # Rounds up to nearest hundred GeV
-    elif quantity == "Zenith [deg]":
-        sigma_cutoff = 180 # degrees
-    elif quantity == "Azimuth [degrees]":
-        sigma_cutoff = 360 # degrees
-    else:
-        sigma_cutoff = numpy.inf
-
-    if np.max(sigma) >= sigma_cutoff:
-        non_inf = sigma <= sigma_cutoff
-        sigma_bounded = sigma[non_inf]
-        sigma_overflow = len(sigma)-len(sigma_bounded)
-        if sigma_overflow == 1:
-            print(sigma_overflow, " large uncertainty for ", strip_units(quantity))
-        else:
-            print(sigma_overflow, " large uncertainties for ", strip_units(quantity))
-        if len(sigma_bounded) > 0:
-            print("New maximum uncertainty:", np.max(sigma_bounded))
-            abort_sigma_plot = False
-        else:
-            print("Aborting sigma histogram -- no small uncertainties for ", strip_units(quantity))
-            abort_sigma_plot = True
-    else:
-        sigma_overflow = None
-        abort_sigma_plot = False
+    sigma_bounded, sigma_overflow, non_inf, abort_sigma_plot = bound_uncertainties(true, sigma, quantity)
 
     if abort_sigma_plot == False:
         plt.figure()
         plt.title("Predicted " + strip_units(quantity) + " Uncertainty vs. True " + strip_units(quantity))
         plt.xlabel("True " + quantity)
         plt.ylabel("Predicted " + strip_units(quantity) + " Uncertainty " + get_units(quantity))
-        cnts, xbins, ybins, img = plt.hist2d(true, errors, weights=weights, bins=100, range=[[min(true),max(true)],[min(sigma_bounded),max(sigma_bounded)]], norm=matplotlib.colors.LogNorm())
-        x, y_med, y_lower, y_upper = find_contours_2D(true, sigma_bounded, xbins, weights=weights)
+        if sigma_overflow:
+            cnts, xbins, ybins, img = plt.hist2d(true, sigma_bounded, weights=weights[non_inf], bins=100, range=[[min(true),max(true)],[min(sigma_bounded),max(sigma_bounded)]], norm=matplotlib.colors.LogNorm())
+            x, y_med, y_lower, y_upper = find_contours_2D(true, sigma_bounded, xbins, weights=weights[non_inf])
+        else:
+            cnts, xbins, ybins, img = plt.hist2d(true, sigma, weights=weights, bins=100, range=[[min(true),max(true)],[min(sigma),max(sigma)]], norm=matplotlib.colors.LogNorm())
+            x, y_med, y_lower, y_upper = find_contours_2D(true, sigma, xbins, weights=weights)
         plt.plot(x, y_med, color='r', label="Median")
         plt.plot(x, y_lower, color='r', linestyle="dashed", label="68% band")
         plt.plot(x, y_upper, color='r', linestyle="dashed")
@@ -238,8 +222,12 @@ def plot_uncertainty_2d(true, predicted, sigma, quantity, weights, gen_filename=
         plt.title("Predicted " + strip_units(quantity) + " Uncertainty vs. True " + strip_units(quantity) + "Uncertainty")
         plt.xlabel("True " + strip_units(quantity) + " Uncertainty " + get_units(quantity))
         plt.ylabel("Predicted " + strip_units(quantity) + " Uncertainty " + get_units(quantity))
-        cnts, xbins, ybins, img = plt.hist2d(errors, sigma_bounded, weights=weights, bins=100, range=[[min(errors),max(errors)],[min(sigma_bounded),max(sigma_bounded)]], norm=matplotlib.colors.LogNorm())
-        x, y_med, y_lower, y_upper = find_contours_2D(errors, sigma_bounded, xbins, weights=weights)
+        if sigma_overflow:
+            cnts, xbins, ybins, img = plt.hist2d(errors, sigma_bounded, weights=weights[non_inf], bins=100, range=[[min(errors),max(errors)],[min(sigma_bounded),max(sigma_bounded)]], norm=matplotlib.colors.LogNorm())
+            x, y_med, y_lower, y_upper = find_contours_2D(errors, sigma_bounded, xbins, weights=weights[non_inf])
+        else:
+            cnts, xbins, ybins, img = plt.hist2d(errors, sigma, weights=weights, bins=100, range=[[min(errors),max(errors)],[min(sigma),max(sigma)]], norm=matplotlib.colors.LogNorm())
+            x, y_med, y_lower, y_upper = find_contours_2D(errors, sigma, xbins, weights=weights)
         plt.plot(x, y_med, color='r', label="Median")
         plt.plot(x, y_lower, color='r', linestyle="dashed", label="68% band")
         plt.plot(x, y_upper, color='r', linestyle="dashed")
@@ -250,6 +238,8 @@ def plot_uncertainty_2d(true, predicted, sigma, quantity, weights, gen_filename=
         plt.plot([min(errors),max(errors)], [min(sigma_bounded),max(sigma_bounded)], color="black", linestyle="dashed")
         imgname = gen_filename +  file_abbrev(quantity) + "_unc_2D.png"
         plt.savefig(imgname)
+
+    del sigma_overflow
 
 def plot_loss(history, test, metric, variable, no_epochs, gen_filename="path/save_folder/", unc=False):
     plt.figure()
