@@ -185,7 +185,7 @@ def plot_uncertainty_2d(true, predicted, sigma, quantity, weights, gen_filename=
     bar = plt.colorbar()
     bar.set_label("Counts")
     plt.plot([min(true),max(true)], [min(errors),max(errors)], color="black", linestyle="dashed")
-    imgname = gen_filename + "true_" + file_abbrev(quantity) + "unc_2d.png"
+    imgname = gen_filename + "true_" + file_abbrev(quantity) + "unc_2D.png"
     plt.savefig(imgname)
 
     # Set uncertainty cutoff to be maximum of range for energy, zenith, azimuth
@@ -231,7 +231,7 @@ def plot_uncertainty_2d(true, predicted, sigma, quantity, weights, gen_filename=
         bar = plt.colorbar()
         bar.set_label("Counts")
         plt.plot([min(true),max(true)], [min(sigma_bounded),max(sigma_bounded)], color="black", linestyle="dashed")
-        imgname = gen_filename + "pred_" + file_abbrev(quantity) + "unc_2d.png"
+        imgname = gen_filename + "pred_" + file_abbrev(quantity) + "unc_2D.png"
         plt.savefig(imgname)
 
         plt.figure()
@@ -248,7 +248,7 @@ def plot_uncertainty_2d(true, predicted, sigma, quantity, weights, gen_filename=
         bar = plt.colorbar()
         bar.set_label("Counts")
         plt.plot([min(errors),max(errors)], [min(sigma_bounded),max(sigma_bounded)], color="black", linestyle="dashed")
-        imgname = gen_filename +  file_abbrev(quantity) + "_unc_2d.png"
+        imgname = gen_filename +  file_abbrev(quantity) + "_unc_2D.png"
         plt.savefig(imgname)
 
 def plot_loss(history, test, metric, variable, no_epochs, gen_filename="path/save_folder/", unc=False):
