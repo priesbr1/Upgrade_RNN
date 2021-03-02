@@ -12,14 +12,14 @@ def strip_units(variable):
     if variable.find('[') == -1:
         return variable # already unitless
     else:
-        return variable[:variable.find('[')-1]
+        return variable[:variable.find('[')-1] # returns "Base_variable"
 
-def get_units(name_with_units):
+def get_units(variable):
     # Assumes format like "Base_variable [units]", "Base Variable [units]", or "Base_variable" (unitless)
     if variable.find('[') == -1:
         return "" # already unitless
     else:
-        return variable[variable.find('[')+1:variable.find(']')]
+        return variable[variable.find('[')-1] # returns " [units]"
 
 def file_abbrev(variable):
     abbrev = ""
@@ -46,8 +46,8 @@ def bound_uncertainties(true, sigma, quantity):
     else:
         sigma_cutoff = numpy.inf
 
+    non_inf = sigma <= sigma_cutoff
     if np.max(sigma) >= sigma_cutoff:
-        non_inf = sigma <= sigma_cutoff
         sigma_bounded = sigma[non_inf]
         sigma_overflow = len(sigma)-len(sigma_bounded)
         if sigma_overflow == 1:
@@ -62,7 +62,7 @@ def bound_uncertainties(true, sigma, quantity):
             abort_sigma_plot = True
     else:
         sigma_bounded = np.copy(sigma)
-        sigma_overflow = None
+        sigma_overflow = 0
         abort_sigma_plot = False
 
     return sigma_bounded, sigma_overflow, non_inf, abort_sigma_plot
@@ -127,7 +127,7 @@ def plot_uncertainty(true, predicted, sigma, quantity, weights, gen_filename="pa
     
     plt.figure()
     plt.title(strip_units(quantity) + " Pull Plot")
-    plt.xlabel("Calculated/Predicted Uncertainty " + get_units(quantity))
+    plt.xlabel("Calculated/Predicted Uncertainty")
     plt.ylabel("Normalized Counts")
     pull = numpy.divide(errors,sigma)
     plt.hist(pull, bins=60, range=(-8.0,8.0), histtype="step", density=True, weights=weights)
@@ -141,10 +141,10 @@ def plot_uncertainty(true, predicted, sigma, quantity, weights, gen_filename="pa
 
     if abort_sigma_plot == False:
         plt.figure()
-        plt.title("Predicted " + strip_units(quantity) + " Uncertainty")
-        plt.xlabel("Uncertainty " + get_units(quantity))
+        plt.title("Predicted " + strip_units(quantity) + " Uncertainty, Overflow=%i"%sigma_overflow)
+        plt.xlabel("Uncertainty" + get_units(quantity))
         plt.ylabel("Normalized Counts")
-        if sigma_overflow:
+        if sigma_overflow > 0:
             plt.hist(sigma_bounded, bins=100, histtype="step", density=True, weights=weights[non_inf])
         else:
             plt.hist(sigma, bins=100, histtype="step", density=True, weights=weights)
@@ -153,7 +153,7 @@ def plot_uncertainty(true, predicted, sigma, quantity, weights, gen_filename="pa
 
     plt.figure()
     plt.title(strip_units(quantity) + " Prediction Error")
-    plt.xlabel(strip_units(quantity) + " Error " + get_units(quantity))
+    plt.xlabel(strip_units(quantity) + " Error" + get_units(quantity))
     plt.ylabel("Normalized Counts")
     plt.hist(errors, bins=100, histtype="step", density=True, weights=weights)
     imgname = gen_filename + file_abbrev(quantity) + "_error.png"
@@ -171,7 +171,7 @@ def plot_uncertainty(true, predicted, sigma, quantity, weights, gen_filename="pa
 
 def plot_uncertainty_2d(true, predicted, sigma, quantity, weights, gen_filename="path/save_folder/"):
 
-   errors = predicted-true
+    errors = predicted-true
 
     if quantity == "Azimuth [degrees]":
         errors = numpy.array([errors[i] if (errors[i] < 180) else (360-errors[i]) for i in range(len(errors))])
@@ -180,7 +180,7 @@ def plot_uncertainty_2d(true, predicted, sigma, quantity, weights, gen_filename=
     plt.figure()
     plt.title("True " + strip_units(quantity) + " Uncertainty vs. True " + strip_units(quantity))
     plt.xlabel("True " + quantity)
-    plt.ylabel("True " + strip_units(quantity) + " Uncertainty " + get_units(quantity))
+    plt.ylabel("True " + strip_units(quantity) + " Uncertainty" + get_units(quantity))
     cnts, xbins, ybins, img = plt.hist2d(true, errors, weights=weights, bins=100, range=[[min(true),max(true)],[min(errors),max(errors)]], norm=matplotlib.colors.LogNorm())
     x, y_med, y_lower, y_upper = find_contours_2D(true, errors, xbins, weights=weights)
     plt.plot(x, y_med, color='r', label="Median")
@@ -190,20 +190,20 @@ def plot_uncertainty_2d(true, predicted, sigma, quantity, weights, gen_filename=
     plt.grid()
     bar = plt.colorbar()
     bar.set_label("Counts")
-    plt.plot([min(true),max(true)], [min(errors),max(errors)], color="black", linestyle="dashed")
-    imgname = gen_filename + "true_" + file_abbrev(quantity) + "unc_2D.png"
+    plt.hlines(0, min(true), max(true), color="black", linestyle="dashed")
+    imgname = gen_filename + file_abbrev(quantity) + "_true_unc_2D.png"
     plt.savefig(imgname)
 
     sigma_bounded, sigma_overflow, non_inf, abort_sigma_plot = bound_uncertainties(true, sigma, quantity)
 
     if abort_sigma_plot == False:
         plt.figure()
-        plt.title("Predicted " + strip_units(quantity) + " Uncertainty vs. True " + strip_units(quantity))
+        plt.title("Predicted " + strip_units(quantity) + " Uncertainty vs. True " + strip_units(quantity) + ", Overflow=%i"%sigma_overflow)
         plt.xlabel("True " + quantity)
-        plt.ylabel("Predicted " + strip_units(quantity) + " Uncertainty " + get_units(quantity))
-        if sigma_overflow:
-            cnts, xbins, ybins, img = plt.hist2d(true, sigma_bounded, weights=weights[non_inf], bins=100, range=[[min(true),max(true)],[min(sigma_bounded),max(sigma_bounded)]], norm=matplotlib.colors.LogNorm())
-            x, y_med, y_lower, y_upper = find_contours_2D(true, sigma_bounded, xbins, weights=weights[non_inf])
+        plt.ylabel("Predicted " + strip_units(quantity) + " Uncertainty" + get_units(quantity))
+        if sigma_overflow > 0:
+            cnts, xbins, ybins, img = plt.hist2d(true[non_inf], sigma_bounded, weights=weights[non_inf], bins=100, range=[[min(true),max(true)],[min(sigma_bounded),max(sigma_bounded)]], norm=matplotlib.colors.LogNorm())
+            x, y_med, y_lower, y_upper = find_contours_2D(true[non_inf], sigma_bounded, xbins, weights=weights[non_inf])
         else:
             cnts, xbins, ybins, img = plt.hist2d(true, sigma, weights=weights, bins=100, range=[[min(true),max(true)],[min(sigma),max(sigma)]], norm=matplotlib.colors.LogNorm())
             x, y_med, y_lower, y_upper = find_contours_2D(true, sigma, xbins, weights=weights)
@@ -214,17 +214,16 @@ def plot_uncertainty_2d(true, predicted, sigma, quantity, weights, gen_filename=
         plt.grid()
         bar = plt.colorbar()
         bar.set_label("Counts")
-        plt.plot([min(true),max(true)], [min(sigma_bounded),max(sigma_bounded)], color="black", linestyle="dashed")
-        imgname = gen_filename + "pred_" + file_abbrev(quantity) + "unc_2D.png"
+        imgname = gen_filename + file_abbrev(quantity) + "_pred_unc_2D.png"
         plt.savefig(imgname)
 
         plt.figure()
-        plt.title("Predicted " + strip_units(quantity) + " Uncertainty vs. True " + strip_units(quantity) + "Uncertainty")
-        plt.xlabel("True " + strip_units(quantity) + " Uncertainty " + get_units(quantity))
-        plt.ylabel("Predicted " + strip_units(quantity) + " Uncertainty " + get_units(quantity))
-        if sigma_overflow:
-            cnts, xbins, ybins, img = plt.hist2d(errors, sigma_bounded, weights=weights[non_inf], bins=100, range=[[min(errors),max(errors)],[min(sigma_bounded),max(sigma_bounded)]], norm=matplotlib.colors.LogNorm())
-            x, y_med, y_lower, y_upper = find_contours_2D(errors, sigma_bounded, xbins, weights=weights[non_inf])
+        plt.title("Predicted vs. True " + strip_units(quantity) + " Uncertainty, Overflow=%i"%sigma_overflow)
+        plt.xlabel("True " + strip_units(quantity) + " Uncertainty" + get_units(quantity))
+        plt.ylabel("Predicted " + strip_units(quantity) + " Uncertainty" + get_units(quantity))
+        if sigma_overflow > 0:
+            cnts, xbins, ybins, img = plt.hist2d(errors[non_inf], sigma_bounded, weights=weights[non_inf], bins=100, range=[[min(errors),max(errors)],[min(sigma_bounded),max(sigma_bounded)]], norm=matplotlib.colors.LogNorm())
+            x, y_med, y_lower, y_upper = find_contours_2D(errors[non_inf], sigma_bounded, xbins, weights=weights[non_inf])
         else:
             cnts, xbins, ybins, img = plt.hist2d(errors, sigma, weights=weights, bins=100, range=[[min(errors),max(errors)],[min(sigma),max(sigma)]], norm=matplotlib.colors.LogNorm())
             x, y_med, y_lower, y_upper = find_contours_2D(errors, sigma, xbins, weights=weights)
@@ -235,8 +234,7 @@ def plot_uncertainty_2d(true, predicted, sigma, quantity, weights, gen_filename=
         plt.grid()
         bar = plt.colorbar()
         bar.set_label("Counts")
-        plt.plot([min(errors),max(errors)], [min(sigma_bounded),max(sigma_bounded)], color="black", linestyle="dashed")
-        imgname = gen_filename +  file_abbrev(quantity) + "_unc_2D.png"
+        imgname = gen_filename +  file_abbrev(quantity) + "unc_2D.png"
         plt.savefig(imgname)
 
     del sigma_overflow
@@ -510,7 +508,7 @@ def plot_hit_info(pulse_charge, pmt_index, true_energies, num_use, logscale=Fals
     elif not num_use or num_use >= len(pulse_charge):
         imgname = gen_filename + "dist_hitsperenergy_energybins_ylog_all.png"
     elif logscale == True:
-        imgname = gen_filename + "dist_hitsperenergy_energybins_ylog_" + str(num_use) + ".png")
+        imgname = gen_filename + "dist_hitsperenergy_energybins_ylog_" + str(num_use) + ".png"
     else:
         imgname = gen_filename + "dist_hitsperenergy_energybins_" + str(num_use) + ".png"
     plt.savefig(imgname)
@@ -674,7 +672,7 @@ def plot_error(true, predicted, minimum, maximum, quantity, quantity2=0, x=0, ge
     if quantity == "Energy [GeV]":
         plt.ylabel("Energy Percent Error")
     else :
-        plt.ylabel(strip_units(quantity) + " Error " + get_units(quantity))
+        plt.ylabel(strip_units(quantity) + " Error" + get_units(quantity))
     imgname = gen_filename + file_abbrev(quantity) + '_' + file_abbrev(quantity2) + "_err.png"
     plt.savefig(imgname)
 
@@ -713,7 +711,7 @@ def plot_error_contours(true, predicted, minimum, maximum, quantity, quantity2=0
     if quantity == "Energy [GeV]":
         plt.ylabel("Energy Percent Error")
     else:
-        plt.ylabel(strip_units(quantity) + " Error " + get_units(quantity))
+        plt.ylabel(strip_units(quantity) + " Error" + get_units(quantity))
 
     imgname = gen_filename + file_abbrev(quantity) + '_' + file_abbrev(quantity2) + "_err_contours.png"
     plt.savefig(imgname)
@@ -786,7 +784,7 @@ def plot_error_vs_reco(true, predicted, reco, minimum, maximum, quantity, quanti
     if quantity == "Energy [GeV]":
         plt.ylabel("Energy Percent Error")
     else:
-        plt.ylabel(strip_units(quantity) + " Error " + get_units(quantity))
+        plt.ylabel(strip_units(quantity) + " Error" + get_units(quantity))
     plt.legend(loc="best")
     imgname = gen_filename + fle_abbrev(quantity) + '_' + file_abbrev(quantity2) + "_err_comp.png"
     plt.savefig(imgname)
