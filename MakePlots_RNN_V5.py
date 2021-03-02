@@ -12,7 +12,7 @@ import argparse
 
 from Generators_V5 import DataGenerator, SplitGenerator
 from Attention import AttentionWithContext
-from Plots import plot_uncertainty, plot_2dhist, plot_2dhist_contours, plot_1dhist, plot_error, plot_error_contours, plot_loss, plot_error_vs_reco
+from Plots import plot_uncertainty, plot_uncertainty_2d, plot_2dhist, plot_2dhist_contours, plot_1dhist, plot_error, plot_error_contours, plot_loss, plot_error_vs_reco
 
 import keras
 import tensorflow as tf
@@ -446,6 +446,12 @@ def main(config=1):
     plot_uncertainty(dz_true, dz_predicted, dz_sigma, 'dz [m]', weights, gen_filename=save_folder_name)
     plot_uncertainty(azimuth_true, azimuth_predicted, azimuth_sigma, 'Azimuth [degrees]', weights, gen_filename=save_folder_name)
     plot_uncertainty(zenith_true, zenith_predicted, zenith_sigma, 'Zenith [degrees]', weights, gen_filename=save_folder_name)
+    plot_uncertainty_2d(energy_true, energy_predicted, energy_sigma, 'Energy [GeV]', weights, gen_filename=save_folder_name)
+    plot_uncertainty_2d(dx_true, dx_predicted, dx_sigma, 'dx [m]', weights, gen_filename=save_folder_name)
+    plot_uncertainty_2d(dy_true, dy_predicted, dy_sigma, 'dy [m]', weights, gen_filename=save_folder_name)
+    plot_uncertainty_2d(dz_true, dz_predicted, dz_sigma, 'dz [m]', weights, gen_filename=save_folder_name)
+    plot_uncertainty_2d(azimuth_true, azimuth_predicted, azimuth_sigma, 'Azimuth [degrees]', weights, gen_filename=save_folder_name)
+    plot_uncertainty_2d(zenith_true, zenith_predicted, zenith_sigma, 'Zenith [degrees]', weights, gen_filename=save_folder_name)
 
     #output results
     print("DIAGNOSTICS")
