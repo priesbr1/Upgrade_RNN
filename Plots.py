@@ -39,7 +39,7 @@ def bound_uncertainties(true, sigma, quantity):
     # Set uncertainty cutoff to be maximum of range for energy, zenith, azimuth
     if quantity == "Energy [GeV]":
         sigma_cutoff = math.ceil(float(numpy.max(true))/100)*100 # Rounds up to nearest hundred GeV
-    elif quantity == "Zenith [deg]":
+    elif quantity == "Zenith [degrees]":
         sigma_cutoff = 180 # degrees
     elif quantity == "Azimuth [degrees]":
         sigma_cutoff = 360 # degrees
