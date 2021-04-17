@@ -171,7 +171,7 @@ def plot_uncertainty(true, predicted, sigma, quantity, weights, gen_filename="pa
 
 def plot_uncertainty_2d(true, predicted, sigma, quantity, weights, gen_filename="path/save_folder/"):
 
-    errors = predicted-true
+    errors = np.abs(predicted-true)
 
     if quantity == "Azimuth [degrees]":
         errors = numpy.array([errors[i] if (errors[i] < 180) else (360-errors[i]) for i in range(len(errors))])
@@ -190,7 +190,6 @@ def plot_uncertainty_2d(true, predicted, sigma, quantity, weights, gen_filename=
     plt.grid()
     bar = plt.colorbar()
     bar.set_label("Counts")
-    plt.hlines(0, min(true), max(true), color="black", linestyle="dashed")
     imgname = gen_filename + file_abbrev(quantity) + "_true_unc_2D.png"
     plt.savefig(imgname)
 
