@@ -12,14 +12,14 @@ def strip_units(variable):
     if variable.find('[') == -1:
         return variable # already unitless
     else:
-        return variable[:variable.find('[')-1] # returns "Base_variable"
+        return variable[:(variable.find('[')-1)] # returns "Base_variable"
 
 def get_units(variable):
     # Assumes format like "Base_variable [units]", "Base Variable [units]", or "Base_variable" (unitless)
     if variable.find('[') == -1:
         return "" # already unitless
     else:
-        return variable[variable.find('[')-1] # returns " [units]"
+        return variable[(variable.find('[')-1):] # returns " [units]"
 
 def file_abbrev(variable):
     abbrev = ""
