@@ -8,28 +8,29 @@ This repository is for a Recurrent Neural Network (RNN) applied to simulated `i3
 
 ### Problem
 
-When neutrinos have a very high energy (usually at least 1 TeV), they emit a lot of light in the detector, making it much easier to reconstruct its energy, direction, event type, etc. However, this becomes much more difficult to do at lower energies because those events produce less light, so we have less information to work with. The central area of IceCube, known as DeepCore, has a higher instrument density than the rest of the detector. DeepCore is used to probe the low-energy regime of neutrino physics, typically on the scale of 10 GeV, but even that is not enough to consistently create accurate reconstructions of the lowest-energy events. This is where the IceCube-Upgrade comes in. The Upgrade is deploying 7 new stings, each with approximately 100 DOMs, into the DeepCore area. The Upgrade will also make use of two new DOM designs: the D-Egg with two PMTs (one on top, one on bottom), and the mDOM with 24 PMTs scattered over its surface. In total, Gen-1 and the Upgrade will have 15,700 PMTs. With these new DOMs, they hope to improve energy reconstruction of low-energy events to the scale of 1 GeV, as well as improve directional reconstruction.
+When neutrinos have a very high energy (usually at least 1 TeV), they emit a lot of light in the detector, making it much easier to reconstruct its energy, direction, event type, etc. However, this becomes much more difficult at lower energies because those events produce less light, so we have less information to work with. The central area of IceCube, known as DeepCore, has a higher instrument density than the rest of the detector. DeepCore is used to probe the low-energy regime of neutrino physics, typically on the scale of 10 GeV, but even that is not enough to consistently create accurate reconstructions of the lowest-energy events. This is where the IceCube-Upgrade comes in. The Upgrade is deploying 7 new stings, each with approximately 100 DOMs, into the DeepCore area. The Upgrade will also make use of two new DOM designs: the D-Egg with two PMTs (one on top, one on bottom), and the mDOM with 24 PMTs scattered over its surface. In total, Gen-1 and the Upgrade will have 15,700 PMTs. With these new DOMs, we hope to improve energy reconstruction of low-energy events to the scale of 1 GeV, as well as improve directional reconstruction.
 
 ### i3 Data
 
-IceCube uses a specific data type referred to as `i3`. This data type is specific to IceCube and can be accessed using a module called `I3Tray`/`IceTray`. This module stores information about the event, as well as detector status and detector geometry.
+IceCube uses a data type referred to as `i3`. This data type is specific to IceCube and can be accessed using a module called `I3Tray`/`IceTray`. This module stores information about the event, as well as detector status and detector geometry.
 
 ### RNN
 
-The RNN is neural network designed to handle data with a sequential (e.g. temporal) relationship, which is great for IceCube. The RNN takes in three input variables per event: a list of times when light was detected, a list of charges (proprotional to how much light was detected), and a list of generated IDs that describe which PMTs were triggered. Each of the corresponding entries in these lists (e.g. t_1, q_1, p_1) would comprise one hit, and all three lists comprise one event. The RNN outputs energy, dx/dy/dz direction, and error estimates for all four.
+The RNN is neural network designed to handle data with a sequential (e.g. temporal) relationship, which is great for IceCube. The RNN takes in three input variables per event: a list of times when light was detected, a list of charges (proportional to how much light was detected), and a list of generated IDs that describe which PMTs were triggered. Each of the corresponding entries in these lists (e.g. `t_1`, `q_1`, `p_1`) would comprise one hit, and all three lists comprise one event. The RNN outputs energy, dx/dy/dz direction, and error estimates for all four. There is also the capability to perform classification by evet type (track/cascade, CC/NC), but this is not currently used.
 
 ### Files
 
 `Attention.py`: Defines attention layer for RNN. No parsed inputs.
 
-`combine_hdf5.py`: Takes data in .hdf5 form and combines multiple files into a single file. Parsed inputs:
-* input_files: path/name of the input file(s) to be combined (can use ? and * as wildcard fillers)
+`combine_hdf5.py`: Takes data in `.hdf5` form and combines multiple files into a single file. Parsed inputs:
+* input_files: path/name of the input file(s) to be combined (can use `?` and `*` as wildcard fillers)
 * output_files: path/name of the output file after combination
-* export_geometry.py: Initializes and outputs Gen-1 detector geometry. No parsed inputs.
+
+`export_geometry.py`: Initializes and outputs Gen-1 detector geometry. No parsed inputs.
 
 `export_geometry_V5.py`: Initialzes and outputs Upgrade detector geometry. No parsed inputs.
 
-`filter_hdf5.py`: Applies cuts to .hdf5 data files and shuffles entries. Parsed inputs:
+`filter_hdf5.py`: Applies cuts to `.hdf5` data files and shuffles entries. Parsed inputs:
 * input_file: path/name of the input file that cuts are being applied to
 * base_name: starting point for the name of the output file (should be simple description of data, e.g. 'UpgradeNuMu')
 * energy_range: two-element list containing the minimum and maximum energy values for the output data
@@ -48,13 +49,13 @@ The RNN is neural network designed to handle data with a sequential (e.g. tempor
 
 `Generators_V5.py`: Sets up generators used to process large amounts of Upgrade data for RNN. No parsed inputs.
 
-`i3_to_hdf5.py`: Processes information from Gen-1 .i3 files (or variants) into features/labels for the RNN, stored in .hdf5 format. Parsed inputs:
-* file: path/name of the input file(s) to be processed (can use ? and * as wildcard fillers)
+`i3_to_hdf5.py`: Processes information from Gen-1 `.i3` files (or variants) into features/labels for the RNN, stored in `.hdf5` format. Parsed inputs:
+* file: path/name of the input file(s) to be processed (can use `?` and `*` as wildcard fillers)
 * overwrite: whether or not to overwrite previous output files
 * pulse_type: type of pulseseries to use (cleaned or uncleaned)
 
-`i3_to_hdf5_V5.py`: Processes information from Upgrade .i3 files (or variants) into features/labels for the RNN, stored in .hdf5 format. Parsed inputs:
-* file: path/name of the input file(s) to be processed (can use ? and * as wildcard fillers)
+`i3_to_hdf5_V5.py`: Processes information from Upgrade `.i3` files (or variants) into features/labels for the RNN, stored in `.hdf5` format. Parsed inputs:
+* file: path/name of the input file(s) to be processed (can use `?` and `*` as wildcard fillers)
 * overwrite: whether or not to overwrite previous output files
 * pulse_type: type of pulseseries to use (cleaned or uncleaned)
 
@@ -197,7 +198,7 @@ It first loads in an `.i3` file (or variant), then sets up dictionaries for feat
 It first loads the input files and checks that they all exist and contain information. Next, it creates empty features/labels/reco dictionaries to match the data format of the input files. It then goes through all the non-empty input files and concatenates the information to the corresponding places in the output file dictionaries. As this happens, it also saves random selctions of some of the variables to check that they were properly stored. Lastly, it checks that these random portions of data are both correctly loaded from the input files and correctly saved in the output file.
 
 `filter_hdf5.py`:
-It first prints out the selected cuts as a double-check that the right ones are being applied. It loads the information from the input file as NumPy arrays into separate dictionaries for easier manipulation. It then automatically names the output file based on the selected cuts, checking that certain cuts make sense, and shuffles all the data before beginning cuts. It applies cuts in the following order:
+It first prints out the selected cuts as a double-check that the right ones are being applied. It loads the information from the input file as `NumPy` arrays into separate dictionaries for easier manipulation. It then automatically names the output file based on the selected cuts, checking that certain cuts make sense, and shuffles all the data before beginning cuts. It applies cuts in the following order:
 * PMT, vertex, energy range, track/cascade, CC/NC, reco, energy flattening, track/cascade flattening, max events
 After cuts, the data is shuffled again and it prints out the number of events before/after cuts. Lastly, it loads the data back into an `.hdf5` file and saves it.
 
