@@ -17,7 +17,7 @@ def dot_product(x, kernel):
         kernel (): weights
     Returns:
     """
-    if K.backend() == 'tensorflow':
+    if K.backend() == "tensorflow":
         # todo: check that this is correct
         return K.squeeze(K.dot(x, K.expand_dims(kernel)), axis=-1)
     else:
@@ -50,7 +50,7 @@ class AttentionWithContext(Layer):
 
         self.supports_masking = True
         self.return_attention = return_attention
-        self.init = initializers.get('glorot_uniform')
+        self.init = initializers.get("glorot_uniform")
 
         self.W_regularizer = regularizers.get(W_regularizer)
         self.u_regularizer = regularizers.get(u_regularizer)
@@ -68,19 +68,19 @@ class AttentionWithContext(Layer):
 
         self.W = self.add_weight((input_shape[-1], input_shape[-1],),
                                  initializer=self.init,
-                                 name='{}_W'.format(self.name),
+                                 name="{}_W".format(self.name),
                                  regularizer=self.W_regularizer,
                                  constraint=self.W_constraint)
         if self.bias:
             self.b = self.add_weight((input_shape[-1],),
-                                     initializer='zero',
-                                     name='{}_b'.format(self.name),
+                                     initializer="zero",
+                                     name="{}_b".format(self.name),
                                      regularizer=self.b_regularizer,
                                      constraint=self.b_constraint)
 
         self.u = self.add_weight((input_shape[-1],),
                                  initializer=self.init,
-                                 name='{}_u'.format(self.name),
+                                 name="{}_u".format(self.name),
                                  regularizer=self.u_regularizer,
                                  constraint=self.u_constraint)
 

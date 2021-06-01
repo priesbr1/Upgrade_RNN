@@ -1,23 +1,23 @@
 import h5py
-import numpy
+import numpy as np
 from icecube import icetray, dataio, dataclasses
 from I3Tray import I3Units
 import sys
 import h5py
-numpy.set_printoptions(threshold=sys.maxsize)
+np.set_printoptions(threshold=sys.maxsize)
 
 infilename = "GeoCalibDetectorStatus_AVG_55697-57531_PASS2_SPE_withScaledNoise.i3.gz"
 outfilename = "geometry.hdf5"
 geo_file = dataio.I3File(infilename)
-outfile = h5py.File(outfilename, "w")
+outfile = h5py.File(outfilename, 'w')
 
 frame = geo_file.pop_frame()
 frame = geo_file.pop_frame()
 g = frame["I3Geometry"]    
 omgeo = g.omgeo
 
-dom_indices = numpy.zeros((10,10,60))
-dom_positions = numpy.zeros((86*60,3))
+dom_indices = np.zeros((10,10,60))
+dom_positions = np.zeros((86*60,3))
 dom_indices.fill(-1)
 
 x_coord = 2
@@ -30,7 +30,7 @@ for omkey, geo in omgeo:
     y_pos = geo.position.y
     z_pos = geo.position.z
     dom_index = str_no*60+dom_no
-    dom_positions[dom_index] = numpy.array([x_pos,y_pos,z_pos])
+    dom_positions[dom_index] = np.array([x_pos,y_pos,z_pos])
     if str_no < 78:
         if str_no != str_no_prev:
             if x_pos < x_pos_prev:

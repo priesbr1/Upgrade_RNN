@@ -1,7 +1,6 @@
 import matplotlib
-matplotlib.use('agg')
+matplotlib.use("agg")
 from matplotlib import pyplot as plt
-import numpy
 import numpy as np
 import h5py
 import scipy.stats
@@ -28,27 +27,37 @@ from keras.optimizers import Adam
 from keras.layers import Lambda, Flatten, Reshape, CuDNNLSTM, LSTM, Bidirectional, Activation, Dropout
 from keras.layers import Conv1D, SpatialDropout1D, MaxPooling1D
 
-numpy.set_printoptions(threshold=sys.maxsize)
+np.set_printoptions(threshold=sys.maxsize)
 
 def normalize(input_file, input_labels, use_log_energy):
-    label_keys = [k for k in input_file['labels'].keys()]
-    total_entries = len(input_file['weights'])
+    label_keys = [k for k in input_file["labels"].keys()]
+    total_entries = len(input_file["weights"])
     normalization = dict()
     for k in input_labels:
-        normalization[k] = numpy.zeros(2)
+        normalization[k] = np.zeros(2)
         for i in range(total_entries):
-            if k == 'energy' and use_log_energy: normalization[k][0] += numpy.log10(input_file['labels'][k][i])/total_entries
-            elif k == 'dx': normalization[k][0] += numpy.sin(numpy.pi-numpy.radians(input_file['labels']['zenith'][i]))*numpy.cos(numpy.radians(input_file['labels']['azimuth'][i])-numpy.pi)/total_entries
-            elif k == 'dy': normalization[k][0] += numpy.sin(numpy.pi-numpy.radians(input_file['labels']['zenith'][i]))*numpy.sin(numpy.radians(input_file['labels']['azimuth'][i])-numpy.pi)/total_entries
-            elif k == 'dz': normalization[k][0] += numpy.cos(numpy.pi-numpy.radians(input_file['labels']['zenith'][i]))/total_entries
-            elif k in label_keys: normalization[k][0] += input_file['labels'][k][i]/total_entries
+            if k == "energy" and use_log_energy:
+                normalization[k][0] += np.log10(input_file["labels"][k][i])/total_entries
+            elif k == "dx":
+                normalization[k][0] += np.sin(np.pi-np.radians(input_file["labels"]["zenith"][i]))*np.cos(np.radians(input_file["labels"]["azimuth"][i])-np.pi)/total_entries
+            elif k == "dy":
+                normalization[k][0] += np.sin(np.pi-np.radians(input_file["labels"]["zenith"][i]))*np.sin(np.radians(input_file["labels"]["azimuth"][i])-np.pi)/total_entries
+            elif k == "dz":
+                normalization[k][0] += np.cos(np.pi-np.radians(input_file["labels"]["zenith"][i]))/total_entries
+            elif k in label_keys:
+                normalization[k][0] += input_file["labels"][k][i]/total_entries
 
         for i in range(total_entries):
-            if k == 'energy' and use_log_energy: normalization[k][1] += ((numpy.log10(input_file['labels'][k][i])-normalization[k][0])**2)/total_entries
-            elif k == 'dx': normalization[k][1] += ((numpy.sin(numpy.pi-numpy.radians(input_file['labels']['zenith'][i]))*numpy.cos(numpy.radians(input_file['labels']['azimuth'][i])-numpy.pi)-normalization[k][0])**2)/total_entries
-            elif k == 'dy': normalization[k][1] += ((numpy.sin(numpy.pi-numpy.radians(input_file['labels']['zenith'][i]))*numpy.sin(numpy.radians(input_file['labels']['azimuth'][i])-numpy.pi)-normalization[k][0])**2)/total_entries
-            elif k == 'dz': normalization[k][1] += ((numpy.cos(numpy.pi-numpy.radians(input_file['labels']['zenith'][i]))-normalization[k][0])**2)/total_entries
-            elif k in label_keys: normalization[k][1] += ((input_file['labels'][k][i]-normalization[k][0])**2)/total_entries
+            if k == "energy" and use_log_energy:
+                normalization[k][1] += ((np.log10(input_file["labels"][k][i])-normalization[k][0])**2)/total_entries
+            elif k == "dx":
+                normalization[k][1] += ((np.sin(np.pi-np.radians(input_file["labels"]["zenith"][i]))*np.cos(np.radians(input_file["labels"]["azimuth"][i])-np.pi)-normalization[k][0])**2)/total_entries
+            elif k == "dy":
+                normalization[k][1] += ((np.sin(np.pi-np.radians(input_file["labels"]["zenith"][i]))*np.sin(np.radians(input_file["labels"]["azimuth"][i])-np.pi)-normalization[k][0])**2)/total_entries
+            elif k == "dz":
+                normalization[k][1] += ((np.cos(np.pi-np.radians(input_file["labels"]["zenith"][i]))-normalization[k][0])**2)/total_entries
+            elif k in label_keys:
+                normalization[k][1] += ((input_file["labels"][k][i]-normalization[k][0])**2)/total_entries
         normalization[k][1] = math.sqrt(normalization[k][1])
         print(k,normalization[k])
     return normalization
@@ -74,29 +83,29 @@ def customLoss(y_true, y_pred):
     loss = e_loss/700.0 + d_loss*8.0
 
 def to_xyz(zenith, azimuth):
-    theta = numpy.pi-zenith
-    phi = azimuth-numpy.pi
-    rho = numpy.sin(theta)
-    return rho*numpy.cos(phi), rho*numpy.sin(phi), numpy.cos(theta)
+    theta = np.pi-zenith
+    phi = azimuth-np.pi
+    rho = np.sin(theta)
+    return rho*np.cos(phi), rho*np.sin(phi), np.cos(theta)
     
 def to_zenazi(x,y,z):
-    r = numpy.sqrt(x*x+y*y+z*z)
-    theta = numpy.zeros(len(r))
+    r = np.sqrt(x*x+y*y+z*z)
+    theta = np.zeros(len(r))
         
-    normal_bins = (r>0.) & (numpy.abs(numpy.asarray(z)/r)<=1.)
-    theta[normal_bins] = numpy.arccos(numpy.asarray(z)/r)
-    theta[numpy.logical_not(normal_bins) & (numpy.asarray(z) < 0.)] = numpy.pi
-    theta[theta<0.] += 2.*numpy.pi
+    normal_bins = (r>0.0) & (np.abs(np.asarray(z)/r)<=1.0)
+    theta[normal_bins] = np.arccos(np.asarray(z)/r)
+    theta[np.logical_not(normal_bins) & (np.asarray(z) < 0.0)] = np.pi
+    theta[theta<0.0] += 2.0*np.pi
     
-    phi = numpy.zeros(len(r))
-    phi[ (numpy.asarray(x)!=0.) & (numpy.asarray(y)!=0.) ] = numpy.arctan2(y,x)
-    phi[phi < 0.] += 2.*numpy.pi
+    phi = np.zeros(len(r))
+    phi[ (np.asarray(x)!=0.0) & (np.asarray(y)!=0.0) ] = np.arctan2(y,x)
+    phi[phi < 0.0] += 2.0*np.pi
 
-    zenith = numpy.pi - theta
-    azimuth = phi + numpy.pi
+    zenith = np.pi - theta
+    azimuth = phi + np.pi
    
-    zenith[zenith > numpy.pi] -= numpy.pi-(zenith[zenith > numpy.pi]-numpy.pi)
-    azimuth -= (azimuth/(2.*numpy.pi)).astype(numpy.int).astype(numpy.float) * 2.*numpy.pi
+    zenith[zenith > np.pi] -= np.pi-(zenith[zenith > np.pi]-np.pi)
+    azimuth -= (azimuth/(2.0*np.pi)).astype(np.int).astype(np.float) * 2.0*np.pi
     
     return zenith, azimuth
 
@@ -158,11 +167,14 @@ def main(config=1):
     print("Saving to:", save_folder_name)
 
     reco = False
-    if "reco" in ff.keys(): reco = True
+    if "reco" in ff.keys():
+        reco = True
 
-    network_labels = ['energy', 'dx', 'dy', 'dz', 'isTrack', 'isCascade', 'isCC', 'isNC']
-    if use_standardization: normalization = normalize(ff, network_labels, use_log_energy)
-    else: normalization = []
+    network_labels = ["energy", "dx", "dy", "dz", "isTrack", "isCascade", "isCC", "isNC"]
+    if use_standardization:
+        normalization = normalize(ff, network_labels, use_log_energy)
+    else:
+        normalization = []
     gen = DataGenerator(ff, labels=network_labels, maxlen=no_hits, use_log_energy=use_log_energy,use_weights=use_weights,normal=normalization)
     gen_train = SplitGenerator(gen, fraction=0.70, offset=0.00)
     gen_val = SplitGenerator(gen, fraction=0.10, offset=0.70)
@@ -173,13 +185,14 @@ def main(config=1):
 
     print("Plotting input distributions")
     t_inputs_start = time.time()
-    plot_inputs([ff['features/pulse_time'][:], ff['features/pulse_charge'][:]], num_use=num_use, log_charge=False, gen_filename=save_folder_name)
+    plot_inputs([ff["features/pulse_time"][:], ff["features/pulse_charge"][:]], num_use=num_use, log_charge=False, gen_filename=save_folder_name)
     t_inputs_end = time.time()
     print((t_inputs_end-t_inputs_start)/60., "minutes to plot inputs")
 
     labels_raw = None
     labels_predicted_raw = None
-    if reco: labels_reco = None
+    if reco:
+        labels_reco = None
     weights_raw = None
    
     print("Testing model")
@@ -191,8 +204,8 @@ def main(config=1):
             labels_raw = batch_labels
             weights_raw = batch_weights
         else:
-            labels_raw           = numpy.append(labels_raw,           batch_labels,           axis=0)
-            weights_raw          = numpy.append(weights_raw,          batch_weights,          axis=0)
+            labels_raw           = np.append(labels_raw,           batch_labels,           axis=0)
+            weights_raw          = np.append(weights_raw,          batch_weights,          axis=0)
         del batch_features
         del batch_labels
         del batch_weights
@@ -207,8 +220,8 @@ def main(config=1):
             labels_raw = batch_labels
             weights_raw = batch_weights
         else:
-            labels_raw           = numpy.append(labels_raw,           batch_labels,           axis=0)
-            weights_raw          = numpy.append(weights_raw,          batch_weights,          axis=0)
+            labels_raw           = np.append(labels_raw,           batch_labels,           axis=0)
+            weights_raw          = np.append(weights_raw,          batch_weights,          axis=0)
         del batch_features
         del batch_labels
         del batch_weights
@@ -223,8 +236,8 @@ def main(config=1):
             labels_raw = batch_labels
             weights_raw = batch_weights
         else:
-            labels_raw           = numpy.append(labels_raw,           batch_labels,           axis=0)
-            weights_raw          = numpy.append(weights_raw,          batch_weights,          axis=0)
+            labels_raw           = np.append(labels_raw,           batch_labels,           axis=0)
+            weights_raw          = np.append(weights_raw,          batch_weights,          axis=0)
         del batch_features
         del batch_labels
         del batch_weights
@@ -232,8 +245,8 @@ def main(config=1):
     test_labels = labels_raw#gen.untransform_labels(labels_raw)
     test_weights = weights_raw
 
-    labels = numpy.concatenate((train_labels, val_labels, test_labels))
-    weights = numpy.concatenate((train_weights, val_weights, test_weights))
+    labels = np.concatenate((train_labels, val_labels, test_labels))
+    weights = np.concatenate((train_weights, val_weights, test_weights))
 
     energy_true = labels[:,0]
     dx_true = labels[:,1]
@@ -247,9 +260,9 @@ def main(config=1):
     total_entries = len(weights)
 
     #shuffle entries
-    order = numpy.arange(total_entries)
-    numpy.random.seed(86)
-    numpy.random.shuffle(order)
+    order = np.arange(total_entries)
+    np.random.seed(86)
+    np.random.shuffle(order)
     weights = weights[order]
 
     energy_true = energy_true[order]
@@ -271,41 +284,41 @@ def main(config=1):
     #isTrack_predicted = [isTrack_predicted > isCascade_predicted]
     #isCascade_predicted = [isCascade_predicted > isTrack_predicted]
     
-    #trueTracks = numpy.sum(numpy.logical_and(isTrack_true, isTrack_predicted))
-    #falseTracks = numpy.sum(numpy.logical_and(numpy.logical_not(isTrack_true), isTrack_predicted))
-    #trueCascades = numpy.sum(numpy.logical_and(isCascade_true, isCascade_predicted))
-    #falseCascades = numpy.sum(numpy.logical_and(numpy.logical_not(isCascade_true), isCascade_predicted))
+    #trueTracks = np.sum(np.logical_and(isTrack_true, isTrack_predicted))
+    #falseTracks = np.sum(np.logical_and(np.logical_not(isTrack_true), isTrack_predicted))
+    #trueCascades = np.sum(np.logical_and(isCascade_true, isCascade_predicted))
+    #falseCascades = np.sum(np.logical_and(np.logical_not(isCascade_true), isCascade_predicted))
     
     #fig, ax = plt.subplots()
-    #bars1 = ax.bar(numpy.arange(2), [trueTracks, trueCascades], 0.25, color='SkyBlue')
-    #bars2 = ax.bar(numpy.arange(2)+0.5*numpy.ones(2), [falseTracks, falseCascades], 0.25, color='IndianRed')
-    #ax.set_title('Track vs. Cascade classification results')
-    #ax.set_xticks(numpy.arange(4)/2)
-    #ax.set_xticklabels(('True Tracks', 'False Tracks', 'True Cascades', 'False Cascades'))
-    #imgname = save_folder_name+'class.png'
+    #bars1 = ax.bar(np.arange(2), [trueTracks, trueCascades], 0.25, color="SkyBlue")
+    #bars2 = ax.bar(np.arange(2)+0.5*np.ones(2), [falseTracks, falseCascades], 0.25, color="IndianRed")
+    #ax.set_title("Track vs. Cascade classification results")
+    #ax.set_xticks(np.arange(4)/2)
+    #ax.set_xticklabels(("True Tracks", "False Tracks", "True Cascades", "False Cascades"))
+    #imgname = save_folder_name+"class.png"
     #plt.savefig(imgname)
     
-    zenith_true, azimuth_true = numpy.degrees(to_zenazi(dx_true, dy_true, dz_true))
+    zenith_true, azimuth_true = np.degrees(to_zenazi(dx_true, dy_true, dz_true))
 
     #Make plots
     print("Plotting regression output distributions")
     t_regression_start = time.time()
     if use_log_energy:
-        plot_outputs(numpy.log10(energy_true), min(numpy.log10(energy_true)), max(numpy.log10(energy_true)), 'Energy [log10(E/GeV)]', weights, num_use=num_use, logscale=False, gen_filename=save_folder_name)
+        plot_outputs(np.log10(energy_true), min(np.log10(energy_true)), max(np.log10(energy_true)), "Energy [log10(E/GeV)]", weights, num_use=num_use, logscale=False, gen_filename=save_folder_name)
     else:
-        plot_outputs(energy_true, min(energy_true), max(energy_true), 'Energy [GeV]', weights, num_use=num_use, logscale=False, gen_filename=save_folder_name)
-    plot_outputs(dx_true, -1.0, 1.0, 'dx [m]', weights, num_use=num_use, logscale=False, gen_filename=save_folder_name)
-    plot_outputs(dy_true, -1.0, 1.0, 'dy [m]', weights, num_use=num_use, logscale=False, gen_filename=save_folder_name)
-    plot_outputs(dz_true, -1.0, 1.0, 'dz [m]', weights, num_use=num_use, logscale=False, gen_filename=save_folder_name)
-    plot_outputs(azimuth_true, 0, 360, 'Azimuth [degrees]', weights, num_use=num_use, logscale=False, gen_filename=save_folder_name)
-    plot_outputs(zenith_true, 0, 180, 'Zenith [degrees]', weights, num_use=num_use, logscale=False, gen_filename=save_folder_name)
+        plot_outputs(energy_true, min(energy_true), max(energy_true), "Energy [GeV]", weights, num_use=num_use, logscale=False, gen_filename=save_folder_name)
+    plot_outputs(dx_true, -1.0, 1.0, "dx [m]", weights, num_use=num_use, logscale=False, gen_filename=save_folder_name)
+    plot_outputs(dy_true, -1.0, 1.0, "dy [m]", weights, num_use=num_use, logscale=False, gen_filename=save_folder_name)
+    plot_outputs(dz_true, -1.0, 1.0, "dz [m]", weights, num_use=num_use, logscale=False, gen_filename=save_folder_name)
+    plot_outputs(azimuth_true, 0, 360, "Azimuth [degrees]", weights, num_use=num_use, logscale=False, gen_filename=save_folder_name)
+    plot_outputs(zenith_true, 0, 180, "Zenith [degrees]", weights, num_use=num_use, logscale=False, gen_filename=save_folder_name)
     t_regression_end = time.time()
     print((t_regression_end-t_regression_start)/60., "minutes to plot regression outputs")
 
     print("Plotting classification output distributions")
     t_classification_start = time.time()
-    plot_outputs_classify(track_true, casacde_true, energy_true, min(energy_true), max(energy_true), 'track', 'cascade', 'Energy [GeV]', ['Track','Cascade'], num_use=num_use, logscale=False, gen_filename=save_folder_name)
-    plot_outputs_classify(CC_true, NC_true, energy_true, min(energy_true), max(energy_true), 'CC', 'NC', 'Energy [GeV]', ['CC','NC'], num_use=num_use, logscale=False, gen_filename=save_folder_name)
+    plot_outputs_classify(track_true, casacde_true, energy_true, min(energy_true), max(energy_true), "track", "cascade", "Energy [GeV]", ["Track","Cascade"], num_use=num_use, logscale=False, gen_filename=save_folder_name)
+    plot_outputs_classify(CC_true, NC_true, energy_true, min(energy_true), max(energy_true), "CC", "NC", "Energy [GeV]", ["CC","NC"], num_use=num_use, logscale=False, gen_filename=save_folder_name)
     t_classification_end = time.time()
     print((t_classification_end-t_classification_start)/60., "minutes to plot classification outputs")
 

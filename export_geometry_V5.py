@@ -1,10 +1,10 @@
 import h5py
-import numpy
+import numpy as np
 from icecube import icetray, dataio, dataclasses
 from I3Tray import I3Units
 import sys
 import h5py
-numpy.set_printoptions(threshold=sys.maxsize)
+np.set_printoptions(threshold=sys.maxsize)
 
 inpath = "/mnt/scratch/priesbr1/Simulation_Files/"
 outpath = "/mnt/scratch/priesbr1/Processed_Files/"
@@ -13,7 +13,7 @@ outfilename = "geometry_upgrade.hdf5"
 full_infile_name = inpath+infilename
 full_outfile_name = outpath+outfilename
 geo_file = dataio.I3File(full_infile_name)
-outfile = h5py.File(full_outfile_name, "w")
+outfile = h5py.File(full_outfile_name, 'w')
 
 frame = geo_file.pop_frame()
 while not (frame.Stop == icetray.I3Frame.Geometry):
@@ -27,9 +27,9 @@ omgeomap = frame["I3OMGeoMap"]
 list_of_omkeys = sorted(list(omgeomap.keys()))
 num_pmt = len(list_of_omkeys)    
 
-pmt_indices = numpy.zeros((10,10,60))
-pmt_positions = numpy.zeros((num_pmt,3))
-pmt_directions = numpy.zeros((num_pmt,2))
+pmt_indices = np.zeros((10,10,60))
+pmt_positions = np.zeros((num_pmt,3))
+pmt_directions = np.zeros((num_pmt,2))
 pmt_indices.fill(-1)
 
 x_coord = 2
@@ -47,8 +47,8 @@ for omkey, geo in omgeo:
     for i in range(num_pmt):
         if (omkey.string == list_of_omkeys[i].string and omkey.om == list_of_omkeys[i].om and omkey.pmt == list_of_omkeys[i].pmt):
             pmt_index = i
-    pmt_positions[pmt_index] = numpy.array([x_pos,y_pos,z_pos])
-    pmt_directions[pmt_index] = numpy.array([zen, azi])
+    pmt_positions[pmt_index] = np.array([x_pos,y_pos,z_pos])
+    pmt_directions[pmt_index] = np.array([zen, azi])
 
     if str_no < 78:
         if str_no != str_no_prev:

@@ -3,7 +3,7 @@
 
 import os, sys
 import glob
-import numpy
+import numpy as np
 import matplotlib.pyplot as plt
 import argparse
 from icecube import icetray, dataio, dataclasses
@@ -59,7 +59,7 @@ def get_event_info(filename_list, pulse_type, num_use):
                 SMT3_flag = False
                 # Config 1011 is SMT3
                 # dataclasses.TriggerKey(source, ttype, config_id)
-                triggers = frame['I3TriggerHierarchy']
+                triggers = frame["I3TriggerHierarchy"]
                 for trig in triggers:
                     key_str = str(trig.key)
                     s = key_str.strip('[').strip(']').split(':')
@@ -74,10 +74,10 @@ def get_event_info(filename_list, pulse_type, num_use):
                     # get all pulses
                     pulseseriesmap = None
                     try:
-                        if pulse_type == 'uncleaned':
-                            pulseseriesmap = dataclasses.I3RecoPulseSeriesMap.from_frame(frame, 'SplitInIcePulses')
-                        elif pulse_type == 'cleaned':
-                            pulseseriesmap = dataclasses.I3RecoPulseSeriesMap.from_frame(frame, 'SplitInIcePulsesSRT')
+                        if pulse_type == "uncleaned":
+                            pulseseriesmap = dataclasses.I3RecoPulseSeriesMap.from_frame(frame, "SplitInIcePulses")
+                        elif pulse_type == "cleaned":
+                            pulseseriesmap = dataclasses.I3RecoPulseSeriesMap.from_frame(frame, "SplitInIcePulsesSRT")
                         else:
                             raise RuntimeError("Unknown pulseseries type specified: %s"%pulse_type)
                     except:
@@ -141,20 +141,20 @@ def plot_trig_resolution(shifted_all_pulses, shifted_DC_pulses, output_folder, l
     plt.xlabel("True Pulse Time - Trigger Time [ns]")
     plt.ylabel("Counts")
     if logscale == True:
-        plt.yscale('log')
-    plt.hist(flattened_all_pulses, range=(min(flattened_all_pulses), max(flattened_all_pulses)), bins=100, histtype='stepfilled', alpha=0.5, label="All, n=%i"%(len(shifted_all_pulses)))
-    plt.hist(flattened_DC_pulses, range=(min(flattened_DC_pulses), max(flattened_DC_pulses)), bins=100, histtype='stepfilled', alpha=0.5, label="DC, n=%i"%(len(shifted_DC_pulses)))
-    plt.axvline(x=0, color='green')
+        plt.yscale("log")
+    plt.hist(flattened_all_pulses, range=(min(flattened_all_pulses), max(flattened_all_pulses)), bins=100, histtype="stepfilled", alpha=0.5, label="All, n=%i"%(len(shifted_all_pulses)))
+    plt.hist(flattened_DC_pulses, range=(min(flattened_DC_pulses), max(flattened_DC_pulses)), bins=100, histtype="stepfilled", alpha=0.5, label="DC, n=%i"%(len(shifted_DC_pulses)))
+    plt.axvline(x=0, color="green")
     plt.legend(loc="best")
     plt.tight_layout()
     if len(shifted_all_pulses) != num_use and logscale == True:
-        imgname = output_folder+'trigger_resolution_ylog_all.png'
+        imgname = output_folder+"trigger_resolution_ylog_all.png"
     elif len(shifted_all_pulses) != num_use:
-        imgname = output_folder+'trigger_resolution_all.png'
+        imgname = output_folder+"trigger_resolution_all.png"
     elif logscale == True:
-        imgname = output_folder+'trigger_resolution_ylog_'+str(num_use)+'.png'
+        imgname = output_folder+"trigger_resolution_ylog_"+str(num_use)+".png"
     else:
-        imgname = output_folder+'trigger_resolution_'+str(num_use)+'.png'
+        imgname = output_folder+"trigger_resolution_"+str(num_use)+".png"
     plt.savefig(imgname)
     print("Plot saved as %s"%imgname)
 

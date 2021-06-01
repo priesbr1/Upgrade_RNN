@@ -2,7 +2,6 @@ import matplotlib
 matplotlib.use("agg")
 from matplotlib import pyplot as plt
 import math
-import numpy
 import numpy as np
 import scipy
 import itertools
@@ -17,12 +16,12 @@ def strip_units(variable):
 def get_units(variable):
     # Assumes format like "Base_variable [units]", "Base Variable [units]", or "Base_variable" (unitless)
     if variable.find('[') == -1:
-        return "" # already unitless
+        return '' # already unitless
     else:
         return variable[(variable.find('[')-1):] # returns " [units]"
 
 def file_abbrev(variable):
-    abbrev = ""
+    abbrev = ''
     no_units = strip_units(variable)
     if "Cos(Zenith)" in no_units: # special abbrev for cosz
         abbrev += "cosz"
@@ -31,20 +30,20 @@ def file_abbrev(variable):
         abbrev += str.lower(base_var) + "unc"
     else: # just lowercase
         abbrev += str.lower(no_units)
-    abbrev = abbrev.replace(' ','') # remove any spaces ("track length --> tracklength")
+    abbrev = abbrev.replace(" ",'') # remove any spaces ("track length --> tracklength")
 
     return abbrev
 
 def bound_uncertainties(true, sigma, quantity):
     # Set uncertainty cutoff to be maximum of range for energy, zenith, azimuth
     if quantity == "Energy [GeV]":
-        sigma_cutoff = math.ceil(float(numpy.max(true))/100)*100 # Rounds up to nearest hundred GeV
+        sigma_cutoff = math.ceil(float(np.max(true))/100)*100 # Rounds up to nearest hundred GeV
     elif quantity == "Zenith [degrees]":
         sigma_cutoff = 180 # degrees
     elif quantity == "Azimuth [degrees]":
         sigma_cutoff = 360 # degrees
     else:
-        sigma_cutoff = numpy.inf
+        sigma_cutoff = np.inf
 
     non_inf = sigma <= sigma_cutoff
     if np.max(sigma) >= sigma_cutoff:
@@ -84,8 +83,8 @@ def find_contours_2D(x_values,y_values,xbins,weights=None,c1=16,c2=84):
     """
     if weights is not None:
         import wquantiles as wq
-    y_values = numpy.array(y_values)
-    indices = numpy.digitize(x_values,xbins)
+    y_values = np.array(y_values)
+    indices = np.digitize(x_values,xbins)
     r1_save = []
     r2_save = []
     median_save = []
@@ -93,7 +92,7 @@ def find_contours_2D(x_values,y_values,xbins,weights=None,c1=16,c2=84):
         mask = indices==i
         if len(y_values[mask])>0:
             if weights is None:
-                r1, m, r2 = numpy.percentile(y_values[mask],[c1,50,c2])
+                r1, m, r2 = np.percentile(y_values[mask],[c1,50,c2])
             else:
                 r1 = wq.quantile(y_values[mask],weights[mask],c1/100.)
                 r2 = wq.quantile(y_values[mask],weights[mask],c2/100.)
@@ -106,9 +105,9 @@ def find_contours_2D(x_values,y_values,xbins,weights=None,c1=16,c2=84):
         median_save.append(m)
         r1_save.append(r1)
         r2_save.append(r2)
-    median = numpy.array(median_save)
-    lower = numpy.array(r1_save)
-    upper = numpy.array(r2_save)
+    median = np.array(median_save)
+    lower = np.array(r1_save)
+    upper = np.array(r2_save)
 
     x = list(itertools.chain(*zip(xbins[:-1],xbins[1:])))
     y_median = list(itertools.chain(*zip(median,median)))
@@ -122,16 +121,16 @@ def plot_uncertainty(true, predicted, sigma, quantity, weights, gen_filename="pa
     errors = predicted-true
 
     if quantity == "Azimuth [degrees]":
-        errors = numpy.array([errors[i] if (errors[i] < 180) else (360-errors[i]) for i in range(len(errors))])
-        errors = numpy.array([errors[i] if (errors[i] > -180) else (360+errors[i]) for i in range(len(errors))])
+        errors = np.array([errors[i] if (errors[i] < 180) else (360-errors[i]) for i in range(len(errors))])
+        errors = np.array([errors[i] if (errors[i] > -180) else (360+errors[i]) for i in range(len(errors))])
     
     plt.figure()
     plt.title(strip_units(quantity) + " Pull Plot")
     plt.xlabel("Calculated/Predicted Uncertainty")
     plt.ylabel("Normalized Counts")
-    pull = numpy.divide(errors,sigma)
+    pull = np.divide(errors,sigma)
     plt.hist(pull, bins=60, range=(-8.0,8.0), histtype="step", density=True, weights=weights)
-    x = numpy.linspace(-8.0, 8.0, 100)
+    x = np.linspace(-8.0, 8.0, 100)
     y = scipy.stats.norm.pdf(x,0,1)
     plt.plot(x,y)
     imgname = gen_filename + file_abbrev(quantity) + "_pull.png"
@@ -163,7 +162,7 @@ def plot_uncertainty(true, predicted, sigma, quantity, weights, gen_filename="pa
     plt.title("Error vs. True " + strip_units(quantity))
     plt.xlabel(strip_units(quantity) + " Error / True " + strip_units(quantity))
     plt.ylabel("Normalized Counts")
-    plt.hist(numpy.divide(errors,true), bins=30, range=(-3.0,3.0), histtype="step", density=True, weights=weights)
+    plt.hist(np.divide(errors,true), bins=30, range=(-3.0,3.0), histtype="step", density=True, weights=weights)
     imgname = gen_filename + file_abbrev(quantity) + "_devetrue.png"
     plt.savefig(imgname)
 
@@ -174,8 +173,8 @@ def plot_uncertainty_2d(true, predicted, sigma, minimum, maximum, quantity, weig
     errors = np.abs(predicted-true)
 
     if quantity == "Azimuth [degrees]":
-        errors = numpy.array([errors[i] if (errors[i] < 180) else (360-errors[i]) for i in range(len(errors))])
-        errors = numpy.array([errors[i] if (errors[i] > -180) else (360+errors[i]) for i in range(len(errors))])
+        errors = np.array([errors[i] if (errors[i] < 180) else (360-errors[i]) for i in range(len(errors))])
+        errors = np.array([errors[i] if (errors[i] > -180) else (360+errors[i]) for i in range(len(errors))])
 
     plt.figure()
     plt.title("True " + strip_units(quantity) + " Uncertainty vs. True " + strip_units(quantity))
@@ -472,7 +471,7 @@ def plot_outputs_classify(true1, true2, true3, minimum, maximum, quantity1, quan
     plt.savefig(imgname)
 
 def plot_hit_info(pulse_charge, pmt_index, true_energies, num_use, logscale=False, gen_filename="path/save_folder/"):
-    no_hits = numpy.zeros(len(pulse_charge))
+    no_hits = np.zeros(len(pulse_charge))
 
     if len(no_hits) != len(true_energies):
         raise RuntimeError("Length of energies (%i) and hits (%i) do not match"%(len(true_energies), len(no_hits)))
@@ -489,20 +488,20 @@ def plot_hit_info(pulse_charge, pmt_index, true_energies, num_use, logscale=Fals
     plt.ylabel("Average Number of Hits")
     if logscale == True:
         plt.yscale("log")
-    hit_dist = numpy.array([])
-    energy_dist = numpy.array([])
+    hit_dist = np.array([])
+    energy_dist = np.array([])
     for i in range(0,int(max(true_energies))):
-        energy_dist = numpy.append(energy_dist,i)
-        relevant_energies = numpy.logical_and(true_energies >= i,true_energies < i+1)
+        energy_dist = np.append(energy_dist,i)
+        relevant_energies = np.logical_and(true_energies >= i,true_energies < i+1)
         relevant_hits = no_hits[relevant_energies]
         if len(relevant_hits) == 0:
-            hit_dist = numpy.append(hit_dist,0)
+            hit_dist = np.append(hit_dist,0)
         else:
             if num_use and len(relevant_hits) > num_use:
                 relevant_hits = relevant_hits[:num_use]
-                hit_dist = numpy.append(hit_dist,sum(relevant_hits)/len(relevant_hits))
+                hit_dist = np.append(hit_dist,sum(relevant_hits)/len(relevant_hits))
             else:
-                hit_dist = numpy.append(hit_dist,sum(relevant_hits)/len(relevant_hits))
+                hit_dist = np.append(hit_dist,sum(relevant_hits)/len(relevant_hits))
     plt.bar(energy_dist,hit_dist,8)
     if (not num_use or num_use >= len(pulse_charge)) and logscale == False:
         imgname = gen_filename + "dist_hits_energybins_all.png"
@@ -523,20 +522,20 @@ def plot_hit_info(pulse_charge, pmt_index, true_energies, num_use, logscale=Fals
     plt.ylabel("Average Hits/Energy")
     if logscale == True:
         plt.yscale("log")
-    hit_dist = numpy.array([])
-    energy_dist = numpy.array([])
+    hit_dist = np.array([])
+    energy_dist = np.array([])
     for i in range(0,int(max(true_energies))):
-        energy_dist = numpy.append(energy_dist,i)
-        relevant_energies = numpy.logical_and(true_energies >= i,true_energies < i+1)
-        relevant_hits = numpy.divide(no_hits[relevant_energies],true_energies[relevant_energies])
+        energy_dist = np.append(energy_dist,i)
+        relevant_energies = np.logical_and(true_energies >= i,true_energies < i+1)
+        relevant_hits = np.divide(no_hits[relevant_energies],true_energies[relevant_energies])
         if len(relevant_hits) == 0:
-            hit_dist = numpy.append(hit_dist,0)
+            hit_dist = np.append(hit_dist,0)
         else:
             if num_use and len(relevant_hits) > num_use:
                 relevant_hits = relevant_hits[:num_use]
-                hit_dist = numpy.append(hit_dist, sum(relevant_hits)/len(relevant_hits))
+                hit_dist = np.append(hit_dist, sum(relevant_hits)/len(relevant_hits))
             else:
-                hit_dist = numpy.append(hit_dist,sum(relevant_hits)/len(relevant_hits))
+                hit_dist = np.append(hit_dist,sum(relevant_hits)/len(relevant_hits))
     plt.bar(energy_dist,hit_dist,8)
     if (not num_use or num_use >= len(pulse_charge)) and logscale == False:
         imgname = gen_filename + "dist_hitsperenergy_energybins_all.png"
@@ -595,13 +594,13 @@ def plot_hit_info(pulse_charge, pmt_index, true_energies, num_use, logscale=Fals
 
     fractions_file = open(gen_filename + "hits_PMTs_fractions.txt", 'w')
     for val in [10,50,100,150,200,250,300,400,500]:
-        over_frac = len(numpy.argwhere(no_hits > val))/len(no_hits)
+        over_frac = len(np.argwhere(no_hits > val))/len(no_hits)
         fractions_file.write("Fraction of events with more than %i hits: %.5f\n"%(val, over_frac))
     fractions_file.write('-'*50+'\n')
 
-    no_pmts = numpy.zeros(len(pmt_index))
+    no_pmts = np.zeros(len(pmt_index))
     for i in range(len(no_pmts)):
-        no_pmts[i] = len(numpy.unique(pmt_index[i]))
+        no_pmts[i] = len(np.unique(pmt_index[i]))
 
     plt.figure()
     if num_use and num_use <= len(no_pmts):
@@ -624,7 +623,7 @@ def plot_hit_info(pulse_charge, pmt_index, true_energies, num_use, logscale=Fals
     plt.savefig(imgname)
 
     for val in [5,15,30,50,75,100,150,200]:
-        over_frac = len(numpy.argwhere(no_pmts > val))/len(no_pmts)
+        over_frac = len(np.argwhere(no_pmts > val))/len(no_pmts)
         fractions_file.write("Fraction of events with more that %i PMTs triggered: %.5f\n"%(val, over_frac))
     fractions_file.close()
 
@@ -632,7 +631,7 @@ def plot_vertex(x, y, z, num_use, gen_filename="path/save_folder/"):
     x_origin = 46.290000915527344
     y_origin = -34.880001068115234
 
-    r = numpy.sqrt((x-x_origin)**2 + (y-y_origin)**2)
+    r = np.sqrt((x-x_origin)**2 + (y-y_origin)**2)
     r_max = max(r)
     
     plt.figure()
@@ -668,7 +667,7 @@ def plot_error(true, predicted, minimum, maximum, quantity, quantity2=0, x=0, ge
     if quantity == "Energy [GeV]":
         fractional_errors = ((predicted-true)/true)*100. # in percent
     elif quantity == "Azimuth [degrees]":
-        fractional_errors = numpy.array([(predicted[i]-true[i]) if math.fabs((predicted[i]-true[i])) < 180 else ((predicted[i]-true[i]-360) if predicted[i] > true[i] else (predicted[i]-true[i]+360)) for i in range(len(true))])
+        fractional_errors = np.array([(predicted[i]-true[i]) if math.fabs((predicted[i]-true[i])) < 180 else ((predicted[i]-true[i]-360) if predicted[i] > true[i] else (predicted[i]-true[i]+360)) for i in range(len(true))])
     else:
         fractional_errors = predicted-true
 
@@ -676,21 +675,21 @@ def plot_error(true, predicted, minimum, maximum, quantity, quantity2=0, x=0, ge
     left_tail_percentile  = (100.-percentile_in_peak)/2
     right_tail_percentile = 100.-left_tail_percentile
 
-    ranges  = numpy.linspace(minimum, maximum, num=10)
+    ranges  = np.linspace(minimum, maximum, num=10)
     centers = (ranges[1:] + ranges[:-1])/2.
 
-    medians  = numpy.zeros(len(centers))
-    err_from = numpy.zeros(len(centers))
-    err_to   = numpy.zeros(len(centers))
+    medians  = np.zeros(len(centers))
+    err_from = np.zeros(len(centers))
+    err_to   = np.zeros(len(centers))
 
     for i in range(len(ranges)-1):
         val_from = ranges[i]
         val_to   = ranges[i+1]
 
         cut = (x >= val_from) & (x < val_to)
-        lower_lim = numpy.percentile(fractional_errors[cut], left_tail_percentile)
-        upper_lim = numpy.percentile(fractional_errors[cut], right_tail_percentile)
-        median = numpy.percentile(fractional_errors[cut], 50.)
+        lower_lim = np.percentile(fractional_errors[cut], left_tail_percentile)
+        upper_lim = np.percentile(fractional_errors[cut], right_tail_percentile)
+        median = np.percentile(fractional_errors[cut], 50.)
 
         medians[i] = median
         err_from[i] = lower_lim
@@ -721,7 +720,7 @@ def plot_error_contours(true, predicted, minimum, maximum, quantity, quantity2=0
     if quantity == "Energy [GeV]":
         fractional_errors = ((predicted-true)/true)*100. # in percent
     elif quantity == "Azimuth [degrees]":
-        fractional_errors = numpy.array([(predicted[i]-true[i]) if math.fabs((predicted[i]-true[i])) < 180 else ((predicted[i]-true[i]-360) if predicted[i] > true[i] else (predicted[i]-true[i]+360)) for i in range(len(true))])
+        fractional_errors = np.array([(predicted[i]-true[i]) if math.fabs((predicted[i]-true[i])) < 180 else ((predicted[i]-true[i]-360) if predicted[i] > true[i] else (predicted[i]-true[i]+360)) for i in range(len(true))])
     else:
         fractional_errors = predicted-true
 
@@ -753,23 +752,23 @@ def plot_error_contours(true, predicted, minimum, maximum, quantity, quantity2=0
 
 def plot_error_vs_reco(true, predicted, reco, minimum, maximum, quantity, quantity2=0, x=0, gen_filename="path/save_folder/"):
     if quantity2 == 0:
-        x = numpy.copy(true)
+        x = np.copy(true)
         quantity2 = quantity
 
-    x = numpy.copy(x[reco > 1e-3])
-    true = numpy.copy(true[reco > 1e-3])
-    predicted = numpy.copy(predicted[reco > 1e-3])
+    x = np.copy(x[reco > 1e-3])
+    true = np.copy(true[reco > 1e-3])
+    predicted = np.copy(predicted[reco > 1e-3])
 
-    x_reco = numpy.copy(x)
-    true_reco = numpy.copy(true)
-    reco = numpy.copy(reco[reco > 1e-3])
+    x_reco = np.copy(x)
+    true_reco = np.copy(true)
+    reco = np.copy(reco[reco > 1e-3])
 
     if quantity == "Energy [GeV]":
         fractional_errors = ((predicted-true)/true)*100. # in percent
         fractional_errors_reco = ((reco-true_reco)/true_reco)*100.
     elif quantity == "Azimuth [degrees]":
-        fractional_errors = numpy.array([(predicted[i]-true[i]) if math.fabs((predicted[i]-true[i])) < 180 else ((predicted[i]-true[i]-360) if predicted[i] > true[i] else (predicted[i]-true[i]+360)) for i in range(len(true))])
-        fractional_errors_reco = numpy.array([(reco[i]-true_reco[i]) if math.fabs((reco[i]-true_reco[i])) < 180 else ((reco[i]-true_reco[i]-360) if reco[i] > true_reco[i] else (reco[i]-true_reco[i]+360)) for i in range(len(true_reco))])
+        fractional_errors = np.array([(predicted[i]-true[i]) if math.fabs((predicted[i]-true[i])) < 180 else ((predicted[i]-true[i]-360) if predicted[i] > true[i] else (predicted[i]-true[i]+360)) for i in range(len(true))])
+        fractional_errors_reco = np.array([(reco[i]-true_reco[i]) if math.fabs((reco[i]-true_reco[i])) < 180 else ((reco[i]-true_reco[i]-360) if reco[i] > true_reco[i] else (reco[i]-true_reco[i]+360)) for i in range(len(true_reco))])
     else:
         fractional_errors = predicted-true
         fractional_errors_reco = reco-true_reco
@@ -778,28 +777,28 @@ def plot_error_vs_reco(true, predicted, reco, minimum, maximum, quantity, quanti
     left_tail_percentile  = (100.-percentile_in_peak)/2
     right_tail_percentile = 100.-left_tail_percentile
 
-    ranges  = numpy.linspace(minimum, maximum, num=10)
+    ranges  = np.linspace(minimum, maximum, num=10)
     centers = (ranges[1:] + ranges[:-1])/2.
 
-    medians  = numpy.zeros(len(centers))
-    err_from = numpy.zeros(len(centers))
-    err_to   = numpy.zeros(len(centers))
-    medians_reco = numpy.zeros(len(centers))
-    err_from_reco = numpy.zeros(len(centers))
-    err_to_reco = numpy.zeros(len(centers))
+    medians  = np.zeros(len(centers))
+    err_from = np.zeros(len(centers))
+    err_to   = np.zeros(len(centers))
+    medians_reco = np.zeros(len(centers))
+    err_from_reco = np.zeros(len(centers))
+    err_to_reco = np.zeros(len(centers))
 
     for i in range(len(ranges)-1):
         val_from = ranges[i]
         val_to   = ranges[i+1]
 
         cut = (x >= val_from) & (x < val_to)
-        lower_lim = numpy.percentile(fractional_errors[cut], left_tail_percentile)
-        upper_lim = numpy.percentile(fractional_errors[cut], right_tail_percentile)
-        median = numpy.percentile(fractional_errors[cut], 50.)
+        lower_lim = np.percentile(fractional_errors[cut], left_tail_percentile)
+        upper_lim = np.percentile(fractional_errors[cut], right_tail_percentile)
+        median = np.percentile(fractional_errors[cut], 50.)
         cut_reco = (x_reco >= val_from) & (x_reco < val_to)
-        lower_lim_reco = numpy.percentile(fractional_errors_reco[cut_reco], left_tail_percentile)
-        upper_lim_reco = numpy.percentile(fractional_errors_reco[cut_reco], right_tail_percentile)
-        median_reco = numpy.percentile(fractional_errors_reco[cut_reco], 50.)
+        lower_lim_reco = np.percentile(fractional_errors_reco[cut_reco], left_tail_percentile)
+        upper_lim_reco = np.percentile(fractional_errors_reco[cut_reco], right_tail_percentile)
+        median_reco = np.percentile(fractional_errors_reco[cut_reco], 50.)
 
         medians[i] = median
         err_from[i] = lower_lim

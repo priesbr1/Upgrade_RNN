@@ -1,7 +1,7 @@
 #!/bin/sh /cvmfs/icecube.opensciencegrid.org/py2-v3.0.1/icetray-start
 #METAPROJECT: simulation/V06-01-00-RC4
 
-import numpy
+import numpy as np
 import h5py
 import glob
 import argparse
@@ -9,7 +9,7 @@ import sys
 
 def get_file_entries(filename):
     f = h5py.File(filename, 'r')
-    return len(f['weights'])
+    return len(f["weights"])
     f.close()
     del f
 
@@ -36,7 +36,7 @@ args = parser.parse_args()
 filenames = sorted(glob.glob(args.input_files))
 outfilename = args.output_file
 
-numpy.set_printoptions(threshold=sys.maxsize)
+np.set_printoptions(threshold=sys.maxsize)
 
 reco = False
 entries_per_file = []
@@ -48,30 +48,33 @@ for filename in filenames:
 total_entries = sum(entries_per_file)
 print("total entries: {}".format(total_entries))
 
-f = h5py.File(outfilename, "w")
+f = h5py.File(outfilename, 'w')
 grp_features = f.create_group("features")
 grp_labels   = f.create_group("labels")
-if reco: grp_reco = f.create_group("reco")
+if reco:
+    grp_reco = f.create_group("reco")
 
 # create arrays from template
 f_template = h5py.File(filenames[0], 'r')
 
-label_keys = list(f_template['labels'].keys())
-feature_keys = list(f_template['features'].keys())
-if 'reco' in f_template: reco_keys = list(f_template['reco'].keys())
+label_keys = list(f_template["labels"].keys())
+feature_keys = list(f_template["features"].keys())
+if "reco" in f_template:
+    reco_keys = list(f_template["reco"].keys())
 
 out_features = dict()
 out_labels = dict()
-if 'reco' in f_template: out_reco = dict()
+if "reco" in f_template:
+    out_reco = dict()
 
 for k in label_keys:
-    out_labels[k] = numpy.array([])
+    out_labels[k] = np.array([])
 for k in feature_keys:
-    out_features[k] = numpy.array([])
-if 'reco' in f_template:
+    out_features[k] = np.array([])
+if "reco" in f_template:
     for k in reco_keys:
-        out_reco[k] = numpy.array([])
-out_weights = numpy.array([])
+        out_reco[k] = np.array([])
+out_weights = np.array([])
 
 f_template.close()
 del f_template
@@ -87,31 +90,31 @@ file_cascades = []
 file_time_lists = []
 for filename in filenames:
     f_input = h5py.File(filename, 'r')
-    entries = len(f_input['weights'])
+    entries = len(f_input["weights"])
 
     if entries == 0:
         continue
 
     # generate random numbers for checking
-    save_length = numpy.random.randint(5,20)
-    save_index = numpy.random.randint(0,min_entries-(save_length+1))
+    save_length = np.random.randint(5,20)
+    save_index = np.random.randint(0,min_entries-(save_length+1))
 
     print("reading input file {} with {} entries".format(filename, entries))
 
-    out_weights = numpy.concatenate((out_weights, f_input['weights'][:]))
+    out_weights = np.concatenate((out_weights, f_input["weights"][:]))
     for k in label_keys:
-        out_labels[k] = numpy.concatenate((out_labels[k], f_input['labels'][k][:]))
+        out_labels[k] = np.concatenate((out_labels[k], f_input["labels"][k][:]))
     for k in feature_keys:
-        out_features[k] = numpy.concatenate((out_features[k], f_input['features'][k][:]))
-    if 'reco' in f_input:
+        out_features[k] = np.concatenate((out_features[k], f_input["features"][k][:]))
+    if "reco" in f_input:
         for k in reco_keys:
-            out_reco[k] = numpy.concatenate((out_reco[k], f_input['reco'][k][:]))
+            out_reco[k] = np.concatenate((out_reco[k], f_input["reco"][k][:]))
 
-    test_energies = numpy.array(f_input['labels']['energy'][save_index:save_index+save_length])
+    test_energies = np.array(f_input["labels"]["energy"][save_index:save_index+save_length])
     file_energies.append(test_energies)
-    test_cascades = numpy.array(f_input['labels']['isCascade'][save_index:save_index+save_length])
+    test_cascades = np.array(f_input["labels"]["isCascade"][save_index:save_index+save_length])
     file_cascades.append(test_cascades)
-    test_times = numpy.array(f_input['features']['pulse_time'][save_index])
+    test_times = np.array(f_input["features"]["pulse_time"][save_index])
     file_time_lists.append(test_times)
     
     f_input.close()
@@ -139,7 +142,7 @@ grp_weights = f.create_dataset("weights", data=out_weights)
 print("Finished creating weights")
 
 f.close()
-print(" ")
+print(' ')
 
 # check for concatenation errors
 def isSubArray(long_array, short_array):
@@ -151,7 +154,7 @@ def isSubArray(long_array, short_array):
     max_match = 0
     match = 0
 
-    if type(long_array[0]) != numpy.ndarray:
+    if type(long_array[0]) != np.ndarray:
         while i < m and j < n:
             if long_array[i] == short_array[j]:
                 i += 1
@@ -203,7 +206,7 @@ def isSubArray(long_array, short_array):
 bool_array = []
 for i, filename in enumerate(filenames):
     f_input = h5py.File(filename, 'r')
-    energies = f_input['labels']['energy'][:]
+    energies = f_input["labels"]["energy"][:]
     bool_array.append(isSubArray(energies, file_energies[i]))
     f_input.close()
     del f_input
@@ -216,7 +219,7 @@ if False in bool_array:
 bool_array = []
 for i, filename in enumerate(filenames):
     f_input = h5py.File(filename, 'r')
-    cascades = f_input['labels']['isCascade'][:]
+    cascades = f_input["labels"]["isCascade"][:]
     bool_array.append(isSubArray(cascades, file_cascades[i]))
     f_input.close()
     del f_input
@@ -229,7 +232,7 @@ if False in bool_array:
 bool_array = []
 for i, filename in enumerate(filenames):
     f_input = h5py.File(filename, 'r')
-    time_lists = f_input['features']['pulse_time'][:]
+    time_lists = f_input["features"]["pulse_time"][:]
     bool_array.append(isSubArray(time_lists, file_time_lists[i]))
     f_input.close()
     del f_input
@@ -241,9 +244,9 @@ if False in bool_array:
 
 f = h5py.File(outfilename, "r")
 print(f.keys())
-out_energies = f['labels']['energy'][:]
-out_cascades = f['labels']['isCascade'][:]
-out_time_lists = f['features']['pulse_time'][:]
+out_energies = f["labels"]["energy"][:]
+out_cascades = f["labels"]["isCascade"][:]
+out_time_lists = f["features"]["pulse_time"][:]
 
 bool_array = []
 for i, filename in enumerate(filenames):

@@ -6,7 +6,7 @@
 
 import os, sys
 import glob
-import numpy
+import numpy as np
 import h5py
 import argparse
 from icecube import icetray, dataio, dataclasses
@@ -48,39 +48,39 @@ def load_geometry(filename): # Gets geometry from specific geometry file
 
 def read_files(filename_list):
     def track_get_pos(p, length):
-        if (not numpy.isfinite(length)) or (length < 0.) or (length >= p.length):
-            return dataclasses.I3Position(numpy.nan, numpy.nan, numpy.nan)
+        if (not np.isfinite(length)) or (length < 0.) or (length >= p.length):
+            return dataclasses.I3Position(np.nan, np.nan, np.nan)
         return dataclasses.I3Position( p.pos.x + length*p.dir.x, p.pos.y + length*p.dir.y, p.pos.z + length*p.dir.z )
 
     def track_get_time(p, length):
-        if (not numpy.isfinite(length)) or (length < 0.) or (length >= p.length):
-            return numpy.nan
+        if (not np.isfinite(length)) or (length < 0.) or (length >= p.length):
+            return np.nan
         return p.time + length/p.speed
 
     weights = []
     
     features = dict()
-    features['dom_index'] = [] # Use DOM indexing for regular simulation
-    features['pulse_time'] = []
-    features['pulse_charge'] = []
+    features["dom_index"] = [] # Use DOM indexing for regular simulation
+    features["pulse_time"] = []
+    features["pulse_charge"] = []
 
     labels = dict()
-    labels['energy'] = []
-    labels['azimuth'] = []
-    labels['zenith'] = []
-    labels['dir_x'] = []
-    labels['dir_y'] = []
-    labels['dir_z'] = []
-    labels['isTrack'] = []
-    labels['isCascade'] = []
-    labels['isNC'] = []
-    labels['isCC'] = []
-    labels['track_length'] = []
+    labels["energy"] = []
+    labels["azimuth"] = []
+    labels["zenith"] = []
+    labels["dir_x"] = []
+    labels["dir_y"] = []
+    labels["dir_z"] = []
+    labels["isTrack"] = []
+    labels["isCascade"] = []
+    labels["isNC"] = []
+    labels["isCC"] = []
+    labels["track_length"] = []
     
     reco = dict()
-    reco['energy'] = []
-    reco['zenith'] = []
-    reco['azimuth'] = []
+    reco["energy"] = []
+    reco["zenith"] = []
+    reco["azimuth"] = []
 
     for event_file_name in filename_list:
         event_file = dataio.I3File(event_file_name)
@@ -98,10 +98,10 @@ def read_files(filename_list):
                 # get all pulses
                 pulseseriesmap = None
                 try:
-                    if pulse_type == 'uncleaned':
-                        pulseseriesmap = dataclasses.I3RecoPulseSeriesMap.from_frame(frame, 'SplitInIcePulses')
-                    elif pulse_type == 'cleaned':
-                        pulseseriesmap = dataclasses.I3RecoPulseSeriesMap.from_frame(frame, 'SplitInIcePulsesSRT')
+                    if pulse_type == "uncleaned":
+                        pulseseriesmap = dataclasses.I3RecoPulseSeriesMap.from_frame(frame, "SplitInIcePulses")
+                    elif pulse_type == "cleaned":
+                        pulseseriesmap = dataclasses.I3RecoPulseSeriesMap.from_frame(frame, "SplitInIcePulsesSRT")
                     else:
                         raise RuntimeError("Unknown pulseseries type specified: %s"%pulse_type)
                 except:
@@ -110,7 +110,7 @@ def read_files(filename_list):
                     #print("Broken pulse_series_map - skipping event.")
                     continue
 
-                nu = frame['I3MCTree'][0]
+                nu = frame["I3MCTree"][0]
                 nu_energy = nu.energy,
                 nu_zen    = nu.dir.zenith,
                 nu_azi    = nu.dir.azimuth,
@@ -118,8 +118,8 @@ def read_files(filename_list):
                 nu_y      = nu.pos.y,
                 nu_z      = nu.pos.z,
 
-                if frame.Has('IC86_Dunkman_L6_PegLeg_MultiNest8D_NumuCC'): # Check if event reconstruction exists
-                    reco_frame = frame['IC86_Dunkman_L6_PegLeg_MultiNest8D_NumuCC']
+                if frame.Has("IC86_Dunkman_L6_PegLeg_MultiNest8D_NumuCC"): # Check if event reconstruction exists
+                    reco_frame = frame["IC86_Dunkman_L6_PegLeg_MultiNest8D_NumuCC"]
                     reco_energy = reco_frame.energy
                     reco_zenith = reco_frame.dir.zenith
                     reco_azimuth = reco_frame.dir.azimuth
@@ -128,8 +128,8 @@ def read_files(filename_list):
                     reco_zenith = 0
                     reco_azimuth = 0
 
-                isCC = frame['I3MCWeightDict']['InteractionType']==1.
-                isNC = frame['I3MCWeightDict']['InteractionType']==2.
+                isCC = frame["I3MCWeightDict"]["InteractionType"]==1.0
+                isNC = frame["I3MCWeightDict"]["InteractionType"]==2.0
                 isOther = not isCC and not isNC
 
                 # set track classification for NuMu CC only
@@ -145,26 +145,26 @@ def read_files(filename_list):
                     track_length = 0
 
                 # calculate the event weight
-                weightdict = frame['I3MCWeightDict']
-                weight = weightdict['OneWeight'] * (weightdict['PrimaryNeutrinoEnergy'])**(-2.) / weightdict['NEvents']
+                weightdict = frame["I3MCWeightDict"]
+                weight = weightdict["OneWeight"] * (weightdict["PrimaryNeutrinoEnergy"])**(-2.) / weightdict["NEvents"]
 
                 # store labels
                 weights.append(weight)
-                labels['energy'].append(nu_energy[0]/I3Units.GeV)
-                labels['azimuth'].append(nu_azi[0]/I3Units.rad)
-                labels['zenith'].append(nu_zen[0]/I3Units.rad)
-                labels['dir_x'].append(nu_x[0])
-                labels['dir_y'].append(nu_y[0])
-                labels['dir_z'].append(nu_z[0])
-                labels['isTrack'].append(isTrack)
-                labels['isCascade'].append(isCascade)
-                labels['isCC'].append(isCC)
-                labels['isNC'].append(isNC)
-                labels['track_length'].append(track_length)
+                labels["energy"].append(nu_energy[0]/I3Units.GeV)
+                labels["azimuth"].append(nu_azi[0]/I3Units.rad)
+                labels["zenith"].append(nu_zen[0]/I3Units.rad)
+                labels["dir_x"].append(nu_x[0])
+                labels["dir_y"].append(nu_y[0])
+                labels["dir_z"].append(nu_z[0])
+                labels["isTrack"].append(isTrack)
+                labels["isCascade"].append(isCascade)
+                labels["isCC"].append(isCC)
+                labels["isNC"].append(isNC)
+                labels["track_length"].append(track_length)
 
-                reco['energy'].append(reco_energy/I3Units.GeV)
-                reco['zenith'].append(reco_zenith/I3Units.rad)
-                reco['azimuth'].append(reco_azimuth/I3Units.rad)
+                reco["energy"].append(reco_energy/I3Units.GeV)
+                reco["zenith"].append(reco_zenith/I3Units.rad)
+                reco["azimuth"].append(reco_azimuth/I3Units.rad)
 
                 dom_index = []
                 pulse_time = []
@@ -189,12 +189,12 @@ def read_files(filename_list):
                         pulse_time.append(pulse.time)
                         pulse_charge.append(pulse.charge)
 
-                pulse_time = numpy.asarray(pulse_time, dtype=numpy.float64)
-                pulse_charge = numpy.asarray(pulse_charge, dtype=numpy.float32)
-                dom_index = numpy.asarray(dom_index, dtype=numpy.uint16)
+                pulse_time = np.asarray(pulse_time, dtype=np.float64)
+                pulse_charge = np.asarray(pulse_charge, dtype=np.float32)
+                dom_index = np.asarray(dom_index, dtype=np.uint16)
 
                 # sort the arrays by time (second "feature", index 1)
-                sorting = numpy.argsort(pulse_time)
+                sorting = np.argsort(pulse_time)
                 pulse_time = pulse_time[sorting]
                 pulse_charge = pulse_charge[sorting]
                 dom_index = dom_index[sorting]
@@ -202,29 +202,30 @@ def read_files(filename_list):
                 # convert absolute times to relative times
                 #pulse_time[1:] -= pulse_time[:-1]
                 #pulse_time[0] = 0.
-                avg_time = numpy.mean(pulse_time)
+                avg_time = np.mean(pulse_time)
                 pulse_time -= avg_time
-                pulse_time = numpy.asarray(pulse_time, dtype=numpy.float32)
+                pulse_time = np.asarray(pulse_time, dtype=np.float32)
 
-                features['dom_index'].append(dom_index)
-                features['pulse_time'].append(pulse_time)
-                features['pulse_charge'].append(pulse_charge)
+                features["dom_index"].append(dom_index)
+                features["pulse_time"].append(pulse_time)
+                features["pulse_charge"].append(pulse_charge)
 
                 del pulseseriesmap
 
         event_file.close()
 
-    weights = numpy.asarray(weights, dtype=numpy.float64)
+    weights = np.asarray(weights, dtype=np.float64)
     for k in labels.keys():
-        labels[k] = numpy.asarray(labels[k], dtype=numpy.float64)
+        labels[k] = np.asarray(labels[k], dtype=np.float64)
 
     return (features, labels, reco, weights)
 
 def write_hdf5_file(filename, features, labels, reco, weights):
-    f = h5py.File(output_file, "w")
+    f = h5py.File(output_file, 'w')
     grp_features = f.create_group("features")
     grp_labels   = f.create_group("labels")
-    if reco != None: grp_reco = f.create_group("reco")
+    if reco != None:
+        grp_reco = f.create_group("reco")
 
     f.create_dataset("weights", data=weights)
     for k in labels.keys():
@@ -249,7 +250,7 @@ def strip_i3_ext(filename, keep_path=True):
 
     while True:
         basename, ext = os.path.splitext(os.path.basename(name))
-        if (ext == "") or (ext == '.i3'):
+        if (ext == '') or (ext == ".i3"):
             if keep_path:
                 return os.path.join(path, basename)
             else:
@@ -257,7 +258,7 @@ def strip_i3_ext(filename, keep_path=True):
         name = basename
 
 if input_files == None:
-    input_files = sorted(glob.glob('/mnt/scratch/priesbr1/Simulation_Files/NuMu_140000_000???_level2_sim?.zst'))
+    input_files = sorted(glob.glob("/mnt/scratch/priesbr1/Simulation_Files/NuMu_140000_000???_level2_sim?.zst"))
     print("Defaulting to input files: /mnt/scratch/priesbr1/Simulation_Files/NuMu_140000_000???_level2_sim?.zst")
 
 if '*' in input_files or '?' in input_files:
@@ -274,7 +275,7 @@ if isinstance(input_files, list):
             print("Reading {}...".format(input_file))
             features, labels, reco, weights = read_files([input_file])
 
-            if sum(reco['energy']) == 0:
+            if sum(reco["energy"]) == 0:
                 reco = None
 
             if len(weights) > 0 and os.path.isfile(output_file) == False:
@@ -297,7 +298,7 @@ elif isinstance(input_files, str):
         print("Reading {}...".format(input_file))
         features, labels, reco, weights = read_files([input_file])
 
-        if sum(reco['energy']) == 0:
+        if sum(reco["energy"]) == 0:
             reco = None
 
         if len(weights) > 0 and os.path.isfile(output_file) == False:
