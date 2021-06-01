@@ -233,3 +233,44 @@ The RNN also:
 * a function to "fast forward" the generators to a certain epoch
 
 It parses all arguments and loads in the datafile, creating a folder to save the results to (or checking that it already exists). It then splits the data into three different sets (70% train, 10% validate, 20% test) using the generators. After that, it begins constructing the model with the input layer. The embedding layer can be used to pass the DOMs' x/y/z position (or PMTs' x/y/z position and zenith/azimuth angle, in the case of Upgrade simulation) as weights to the RNN. These can also be initalized randomly, and random/non-random initialization showed little difference. It finishes building the model with three LSTM layers, the attention layer, two dense layers, and output layers. It also sets the model optimizer with the learning rate and decay, and then compiles the model with the custom loss functions and metrics. It then checks for (and loads, if available and specified) weights from previous trainings. It also defines an optional leraning rate scheduler modeled with a hyperbolic tangent function. It then trains and tests the RNN, predicting on the test data and loading the predictions into `NumPy` arrays. It proceeds to plot the network history and a variety of results, including histograms, 2D histograms, binned resolutions, and pull plots. It will also plot comparisons to the LLH reconstruction (if avaiable). It then runs some diagnostics on its final performance, and includes similar diagnostics for the LLH performance if available.
+
+### Plotting Functions
+
+In all of the following, "var"/"var1"/"var2"/"var3" is used to represent a variable (energy, zenith, azimuth, etc.), and y-axis is listed first in cases of "var1 vs. var2".
+
+`plot_uncertainty`: 1D histograms using the true prediction error and predicted uncertainty. Produces:
+* var_pull.png (pull plot of quantity's uncertainties)
+* var_uncertainty.png (histogram of quantity's predicted uncertainties)
+* var_error.png (histogram of quantity's true prediction error)
+* var_devetrue.png (histogram of quantity's fractional true prediction error)
+
+`plot_uncertainty_2d`: 2D histograms using the true prediction error and predicted uncertainty. Produces:
+* var_true_unc_2D.png (histogram of quantity's true prediction error vs. true quantity)
+* predvar_true_unc_2D.png (histogram of quantity's true prediction error vs. predicted quantity)
+* var_pred_unc_2D.png (histogram of quantity's predicted uncertainty vs. true quantity)
+* predvar_pred_unc_2D.png (histogram of quantity's predicted uncertainty vs. predicted quantity)
+* varunc_2D.png (histogram of quantity's predicted uncertainty vs. true prediction error)
+
+`plot_loss`: Loss during RNN training. Produces:
+* loss.png (summarized loss vs. epochs curve across all variables)
+* var_loss.png (loss vs. epochs curve specific to quantity)
+
+`plot_2dhist_contours`: 2D histogram of RNN results with contours. Produces:
+* var_contours_2D.png (histogram of predicted quantity vs. true quantity with median and 1-sigma contours)
+
+`plot_2dhist`: 2D histogram of RNN results without contours. Produces:
+* var_2D.png (histogram of predicted quantity vs. true quantity)
+
+`plot_1dhist`: 1D histogram of RNN results. Produces:
+* var_1D.png (histogram of true and predicted quantity)
+
+`plot_inputs`: Distributions of input variables. Produces:
+* time_firstpulse_dist_all.png (histogram of the times of first pulses)
+* time_lastpulse_dist_all.png (histogram of the times of last pulses)
+* sumcharge_dist_all.png (histogram of the sum of event charge)
+
+`plot_outputs`: Distributions of ouput regression variables. Produces:
+* true_var_all.png (histogram of true quantity)
+
+`plot_outputs_classify`: Distributions of output classification variables. Produces:
+* true_var1var2_var3_all.png (histogram of `case1` and `case2`, plotted with respect to true quantity represented by `var3`)
