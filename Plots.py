@@ -169,7 +169,7 @@ def plot_uncertainty(true, predicted, sigma, quantity, weights, gen_filename="pa
 
     del sigma_overflow
 
-def plot_uncertainty_2d(true, predicted, sigma, quantity, weights, gen_filename="path/save_folder/"):
+def plot_uncertainty_2d(true, predicted, sigma, minimum, maximum, quantity, weights, gen_filename="path/save_folder/"):
 
     errors = np.abs(predicted-true)
 
@@ -181,7 +181,7 @@ def plot_uncertainty_2d(true, predicted, sigma, quantity, weights, gen_filename=
     plt.title("True " + strip_units(quantity) + " Uncertainty vs. True " + strip_units(quantity))
     plt.xlabel("True " + quantity)
     plt.ylabel("True " + strip_units(quantity) + " Uncertainty" + get_units(quantity))
-    cnts, xbins, ybins, img = plt.hist2d(true, errors, weights=weights, bins=100, range=[[min(true),max(true)],[min(errors),max(errors)]], norm=matplotlib.colors.LogNorm())
+    cnts, xbins, ybins, img = plt.hist2d(true, errors, weights=weights, bins=100, range=[[minimum,maximum],[min(errors[np.logical_and(true >= minimum, true <= maximum)]),max(errors[np.logical_and(true >= minimum, true <= maximum)])]], norm=matplotlib.colors.LogNorm())
     x, y_med, y_lower, y_upper = find_contours_2D(true, errors, xbins, weights=weights)
     plt.plot(x, y_med, color='r', label="Median")
     plt.plot(x, y_lower, color='r', linestyle="dashed", label="68% band")
@@ -197,7 +197,7 @@ def plot_uncertainty_2d(true, predicted, sigma, quantity, weights, gen_filename=
     plt.title("True " + strip_units(quantity) + " Uncertainty vs. Predicted " + strip_units(quantity))
     plt.xlabel("Predicted " + quantity)
     plt.ylabel("True " + strip_units(quantity) + " Uncertainty" + get_units(quantity))
-    cnts, xbins, ybins, img = plt.hist2d(predicted, errors, weights=weights, bins=100, range=[[min(predicted),max(predicted)],[min(errors),max(errors)]], norm=matplotlib.colors.LogNorm())
+    cnts, xbins, ybins, img = plt.hist2d(predicted, errors, weights=weights, bins=100, range=[[minimum,maximum],[min(errors[np.logical_and(predicted >= minimum, predicted <= maximum)]),max(errors[np.logical_and(predicted >= minimum, predicted <= maximum)])]], norm=matplotlib.colors.LogNorm())
     x, y_med, y_lower, y_upper = find_contours_2D(predicted, errors, xbins, weights=weights)
     plt.plot(x, y_med, color='r', label="Median")
     plt.plot(x, y_lower, color='r', linestyle="dashed", label="68% band")
@@ -217,10 +217,10 @@ def plot_uncertainty_2d(true, predicted, sigma, quantity, weights, gen_filename=
         plt.xlabel("True " + quantity)
         plt.ylabel("Predicted " + strip_units(quantity) + " Uncertainty" + get_units(quantity))
         if sigma_overflow > 0:
-            cnts, xbins, ybins, img = plt.hist2d(true[non_inf], sigma_bounded, weights=weights[non_inf], bins=100, range=[[min(true),max(true)],[min(sigma_bounded),max(sigma_bounded)]], norm=matplotlib.colors.LogNorm())
+            cnts, xbins, ybins, img = plt.hist2d(true[non_inf], sigma_bounded, weights=weights[non_inf], bins=100, range=[[minimum,maximum],[min(sigma_bounded[np.logical_and(true[non_inf] >= minimum, true[non_inf] <= maximum)]),max(sigma_bounded[np.logical_and(true[non_inf] >= minimum, true[non_inf] <= maximum)])]], norm=matplotlib.colors.LogNorm())
             x, y_med, y_lower, y_upper = find_contours_2D(true[non_inf], sigma_bounded, xbins, weights=weights[non_inf])
         else:
-            cnts, xbins, ybins, img = plt.hist2d(true, sigma, weights=weights, bins=100, range=[[min(true),max(true)],[min(sigma),max(sigma)]], norm=matplotlib.colors.LogNorm())
+            cnts, xbins, ybins, img = plt.hist2d(true, sigma, weights=weights, bins=100, range=[[minimum,maximum],[min(sigma[np.logical_and(true >= minimum, true <= maximum)]),max(sigma[np.logical_and(true >= minimum, true <= maximum)])]], norm=matplotlib.colors.LogNorm())
             x, y_med, y_lower, y_upper = find_contours_2D(true, sigma, xbins, weights=weights)
         plt.plot(x, y_med, color='r', label="Median")
         plt.plot(x, y_lower, color='r', linestyle="dashed", label="68% band")
@@ -237,10 +237,10 @@ def plot_uncertainty_2d(true, predicted, sigma, quantity, weights, gen_filename=
         plt.xlabel("Predicted " + quantity)
         plt.ylabel("Predicted " + strip_units(quantity) + " Uncertainty" + get_units(quantity))
         if sigma_overflow > 0:
-            cnts, xbins, ybins, img = plt.hist2d(predicted[non_inf], sigma_bounded, weights=weights[non_inf], bins=100, range=[[min(predicted),max(predicted)],[min(sigma_bounded),max(sigma_bounded)]], norm=matplotlib.colors.LogNorm())
+            cnts, xbins, ybins, img = plt.hist2d(predicted[non_inf], sigma_bounded, weights=weights[non_inf], bins=100, range=[[minimum,maximum],[min(sigma_bounded[np.logical_and(predicted[non_inf] >= minimum, predicted[non_inf] <= maximum)]),max(sigma_bounded[np.logical_and(predicted[non_inf] >= minimum, predicted[non_inf] <= maximum)])]], norm=matplotlib.colors.LogNorm())
             x, y_med, y_lower, y_upper = find_contours_2D(predicted[non_inf], sigma_bounded, xbins, weights=weights[non_inf])
         else:
-            cnts, xbins, ybins, img = plt.hist2d(predicted, sigma, weights=weights, bins=100, range=[[min(predicted),max(predicted)],[min(sigma),max(sigma)]], norm=matplotlib.colors.LogNorm())
+            cnts, xbins, ybins, img = plt.hist2d(predicted, sigma, weights=weights, bins=100, range=[[minimum,maximum],[min(sigma[np.logical_and(predicted >= minimum, predicted <= maximum)]),max(sigma[np.logical_and(predicted >= minimum, predicted <= maximum)])]], norm=matplotlib.colors.LogNorm())
             x, y_med, y_lower, y_upper = find_contours_2D(predicted, sigma, xbins, weights=weights)
         plt.plot(x, y_med, color='r', label="Median")
         plt.plot(x, y_lower, color='r', linestyle="dashed", label="68% band")
