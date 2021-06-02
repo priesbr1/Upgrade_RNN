@@ -20,6 +20,8 @@ The RNN is neural network designed to handle data with a sequential (e.g. tempor
 
 ### Files
 
+A breakdown of all files currently included in the project (excluding this README).
+
 `Attention.py`: Defines attention layer for RNN. No parsed inputs.
 
 `combine_hdf5.py`: Takes data in `.hdf5` form and combines multiple files into a single file. Parsed inputs:
@@ -202,6 +204,81 @@ It first prints out the selected cuts as a double-check that the right ones are 
 * PMT, vertex, energy range, track/cascade, CC/NC, reco, energy flattening, track/cascade flattening, max events
 After cuts, the data is shuffled again and it prints out the number of events before/after cuts. Lastly, it loads the data back into an `.hdf5` file and saves it.
 
+### Plotting Functions
+
+A breakdown of all the functions currently included in `Plots.py`. In all of the following:
+
+1. "var"/"var1"/"var2"/"var3" is used to represent a variable (energy, zenith, azimuth, etc.)
+2. The y-axis is listed first in cases of "var1 vs. var2"
+3. "args" is used to represent additional information in filenames that may depend on plotting specifications
+4. "True prediction error" refers to the quantity `predicted_var - true_var`
+5. "Predicted uncertainty" refers to the RNN estimate of the true prediction error
+
+`plot_uncertainty`: 1D histograms using the true prediction error and predicted uncertainty. Produces:
+* var_pull.png (pull plot of `var` uncertainties)
+* var_uncertainty.png (histogram of `var` predicted uncertainties)
+* var_error.png (histogram of `var` true prediction error)
+* var_devetrue.png (histogram of `var` fractional true prediction error)
+
+`plot_uncertainty_2d`: 2D histograms using the true prediction error and predicted uncertainty. Produces:
+* var_true_unc_2D.png (2D histogram of `var` true prediction error vs. true `var`)
+* predvar_true_unc_2D.png (2D histogram of `var` true prediction error vs. predicted `var`)
+* var_pred_unc_2D.png (2D histogram of `var` predicted uncertainty vs. true `var`)
+* predvar_pred_unc_2D.png (2D histogram of `var` predicted uncertainty vs. predicted `var`)
+* varunc_2D.png (2D histogram of `var` predicted uncertainty vs. `var` true prediction error)
+
+`plot_loss`: Loss during RNN training. Produces:
+* loss.png (summarized loss vs. epochs curve across all variables)
+* var_loss.png (loss vs. epochs curve specific to `var`)
+
+`plot_2dhist_contours`: 2D histogram of RNN results with contours. Produces:
+* var_contours_2D.png (2D histogram of predicted `var` vs. true `var` with median and 1-sigma contours)
+
+`plot_2dhist`: 2D histogram of RNN results without contours. Produces:
+* var_2D.png (2D histogram of predicted `var` vs. true `var`)
+
+`plot_1dhist`: 1D histogram of RNN results. Produces:
+* var_1D.png (histogram of true and predicted `var`)
+
+`plot_inputs`: Distributions of input variables. Produces:
+* time_firstpulse_dist_args.png (histogram of the times of first pulses)
+* time_lastpulse_dist_args.png (histogram of the times of last pulses)
+* sumcharge_dist_args.png (histogram of the sum of event charge)
+
+`plot_outputs`: Distributions of ouput regression variables. Produces:
+* true_var_args.png (histogram of true `var`)
+
+`plot_outputs_classify`: Distributions of output classification variables. Produces:
+* true_var1var2_var3_args.png (histogram of `case1` and `case2`, plotted with respect to true `var3`)
+
+`plot_hit_info`: Histograms using the hit and PMT information for each event. Produces:
+* dist_hits_energybins_args.png (histogram of average number of hits per event vs. energy)
+* dist_hitsperenergy_energybins_args.png (histogram of average number of hits per event per energy vs. energy)
+* dist_hits_args.png (histogram of hits per event)
+* dist2D_hits_energy_args.png (2D histogram of hits per event vs. energy)
+* dist_PMTs_args.png (histogram of unique PMTs triggered per event)
+* hits_PMTs_fractions.txt (text file containing statistics on what fractions of events have more than `X` hits and trigger more than `Y` unique PMTs)
+
+`plot_vertex`: Plots event vertices relative to IceCube String 36. Produces:
+* vertex_positions_args.png (vertical position and radius from String 36, with `DeepCore` and `IC7` areas outlined)
+
+`plot_error`: Errorbar plot of true prediction error. Produces:
+* var1_var2_err.png (1-sigma error bars on `var1` true prediction error in bins of `var2`)
+
+`plot_error_contours`: 2D histogram of true prediction error with contours. Produces:
+* var1_var2_err_contours.png (2D histogram of `var1` true prediction error vs. `var2` with median and 1-sigma contours)
+
+`plot_error_vs_reco`: Errorbar plot of true prediction error with LLH reconstruction for comparison. Produces:
+* var1_var2_err_comp.png (1-sigma error bars on `var1` and `reco` true prediction error in bins of `var2`)
+
+The above plotting functions make use of the following utility functions:
+
+* `strip_units`: Removes the unit information from a variable like `Energy [GeV]`
+* `get_units`: Gets the unit information from a variable like `Energy [GeV]`
+* `file_abbrev`: Creates a file abbreviation for a variable like `Energy [GeV]` with special cases
+* `bound_uncertainties`: Masks out events with RNN predicted uncertainties that are too large
+* `find_contours_2D`: Calculates and returns the contours used in plots with 1-sigma contours
+
 ### Recommended Processing Order
 
 If final file will be small (roughly less than 30GB):
@@ -234,43 +311,6 @@ The RNN also:
 
 It parses all arguments and loads in the datafile, creating a folder to save the results to (or checking that it already exists). It then splits the data into three different sets (70% train, 10% validate, 20% test) using the generators. After that, it begins constructing the model with the input layer. The embedding layer can be used to pass the DOMs' x/y/z position (or PMTs' x/y/z position and zenith/azimuth angle, in the case of Upgrade simulation) as weights to the RNN. These can also be initalized randomly, and random/non-random initialization showed little difference. It finishes building the model with three LSTM layers, the attention layer, two dense layers, and output layers. It also sets the model optimizer with the learning rate and decay, and then compiles the model with the custom loss functions and metrics. It then checks for (and loads, if available and specified) weights from previous trainings. It also defines an optional leraning rate scheduler modeled with a hyperbolic tangent function. It then trains and tests the RNN, predicting on the test data and loading the predictions into `NumPy` arrays. It proceeds to plot the network history and a variety of results, including histograms, 2D histograms, binned resolutions, and pull plots. It will also plot comparisons to the LLH reconstruction (if avaiable). It then runs some diagnostics on its final performance, and includes similar diagnostics for the LLH performance if available.
 
-### Plotting Functions
+### State of the Project
 
-In all of the following, "var"/"var1"/"var2"/"var3" is used to represent a variable (energy, zenith, azimuth, etc.), and y-axis is listed first in cases of "var1 vs. var2".
-
-`plot_uncertainty`: 1D histograms using the true prediction error and predicted uncertainty. Produces:
-* var_pull.png (pull plot of quantity's uncertainties)
-* var_uncertainty.png (histogram of quantity's predicted uncertainties)
-* var_error.png (histogram of quantity's true prediction error)
-* var_devetrue.png (histogram of quantity's fractional true prediction error)
-
-`plot_uncertainty_2d`: 2D histograms using the true prediction error and predicted uncertainty. Produces:
-* var_true_unc_2D.png (histogram of quantity's true prediction error vs. true quantity)
-* predvar_true_unc_2D.png (histogram of quantity's true prediction error vs. predicted quantity)
-* var_pred_unc_2D.png (histogram of quantity's predicted uncertainty vs. true quantity)
-* predvar_pred_unc_2D.png (histogram of quantity's predicted uncertainty vs. predicted quantity)
-* varunc_2D.png (histogram of quantity's predicted uncertainty vs. true prediction error)
-
-`plot_loss`: Loss during RNN training. Produces:
-* loss.png (summarized loss vs. epochs curve across all variables)
-* var_loss.png (loss vs. epochs curve specific to quantity)
-
-`plot_2dhist_contours`: 2D histogram of RNN results with contours. Produces:
-* var_contours_2D.png (histogram of predicted quantity vs. true quantity with median and 1-sigma contours)
-
-`plot_2dhist`: 2D histogram of RNN results without contours. Produces:
-* var_2D.png (histogram of predicted quantity vs. true quantity)
-
-`plot_1dhist`: 1D histogram of RNN results. Produces:
-* var_1D.png (histogram of true and predicted quantity)
-
-`plot_inputs`: Distributions of input variables. Produces:
-* time_firstpulse_dist_all.png (histogram of the times of first pulses)
-* time_lastpulse_dist_all.png (histogram of the times of last pulses)
-* sumcharge_dist_all.png (histogram of the sum of event charge)
-
-`plot_outputs`: Distributions of ouput regression variables. Produces:
-* true_var_all.png (histogram of true quantity)
-
-`plot_outputs_classify`: Distributions of output classification variables. Produces:
-* true_var1var2_var3_all.png (histogram of `case1` and `case2`, plotted with respect to true quantity represented by `var3`)
+Trained/tested on Upgrade NuMu CC data, the RNN currently performs comparably to RetroReco trained/tested on higher-quality Gen-1 data (see [Spring 2021 IceCube Collaboration Meeting presentation](https://drive.google.com/file/d/1a7s-12JyQ8WBkNC3UerCPal7R_5ioeie/view?usp=sharing) and [Spring 2021 MSU UURAF poster](https://drive.google.com/file/d/1bp8xCFlxWifmlOKAFH88pJ0fEj_qUN_Y/view?usp=sharing)). The primary concern we see now is that a number of events are consistently reconstructed around 5-10 GeV regardless of true energy. We think that some of these events are noise-only/noise-dominated, leading them to "non-reconstructable". In this case, a useful next step would be to develop a cut to mask out these kinds of events. One possible approach is to determine if there is a correlation between the predicted energy and preducted energy uncertainty. If some events at low predicted energies have a high predicted uncertainty, these are likely the events causing this issue. The plotting code to determine this would be `plot_uncertainty_2d` used in `RNN_V5.py`.
