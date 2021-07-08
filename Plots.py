@@ -333,6 +333,8 @@ def plot_1dhist(true, predicted, minimum, maximum, quantity, weights, gen_filena
     plt.figure()
     plt.title("Predicted vs. True " + strip_units(quantity))
     plt.xlabel(quantity)
+    if quantity == "Energy [GeV]":
+        plt.yscale("log")
     plt.hist(true, bins=100, range=[minimum,maximum], histtype="step", weights=weights, label="True")
     plt.hist(predicted, bins=100, range=[minimum,maximum], histtype="step", weights=weights, label="Predicted")
     plt.legend(loc="best")
